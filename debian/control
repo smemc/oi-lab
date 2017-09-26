@@ -1,14 +1,14 @@
-Source: oi-ubuntu
+Source: oi-lab
 Section: unknown
 Priority: optional
 Maintainer: Laércio de Sousa <laerciosousa@sme-mogidascruzes.sp.gov.br>
 Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.5
-Homepage: https://github.com/oiteam/oi-ubuntu
-Vcs-Git: git://github.com/oiteam/oi-ubuntu.git
-Vcs-Browser: https://github.com/oiteam/oi-ubuntu
+Homepage: https://github.com/oiteam/oi-lab
+Vcs-Git: git://github.com/oiteam/oi-lab.git
+Vcs-Browser: https://github.com/oiteam/oi-lab
 
-Package: oi-ubuntu-freeze-users
+Package: oi-lab-freeze-users
 Architecture: all
 Depends: ${misc:Depends}, bindfs, libpam-mount, python-gnomekeyring
 Description: automatic user creation and freezing for school labs

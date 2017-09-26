@@ -1,3 +1,0 @@
-etc/security/pam_mount.conf.xml
-usr/bin/oi-ubuntu-freeze-session-auto
-usr/sbin/oi-ubuntu-freeze-mount-wrapper

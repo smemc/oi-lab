@@ -20,7 +20,7 @@ fi
 
 su ${freeze_template_user} -c "env LANG=pt_BR.UTF-8 xdg-user-dirs-update"
 su ${freeze_template_user} -c "[ -d ~/.config/autostart ] || mkdir ~/.config/autostart || exit 1"
-su ${freeze_template_user} -c "echo -e '[Desktop Entry]\nType=Application\nName=Autostart commands for freeze sessions\nExec=oi-ubuntu-freeze-session-auto' > ~/.config/autostart/oi-ubuntu-freeze-session-auto.desktop"
+su ${freeze_template_user} -c "echo -e '[Desktop Entry]\nType=Application\nName=Autostart commands for freeze sessions\nExec=oi-lab-freeze-session-auto' > ~/.config/autostart/oi-lab-freeze-session-auto.desktop"
 
 for i in blueman light-locker print-applet update-notifier xfce4-power-manager
 do

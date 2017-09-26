@@ -1,6 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: oi-ubuntu
-Source: http://github.com/oiteam/oi-ubuntu
+Upstream-Name: oi-lab
+Source: http://github.com/oiteam/oi-lab
 
 Files: *
 Copyright: 2017 Prefeitura de Mogi das Cruzes, SP, Brazil

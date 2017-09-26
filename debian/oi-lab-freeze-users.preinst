@@ -6,5 +6,5 @@ pam_mount_conf_divert="/etc/security/pam_mount.conf.xml.original"
 
 if [ upgrade != "${1}" ] || dpkg --compare-versions "${2}" lt 0.0.1
 then
-    dpkg-divert --package oi-ubuntu-freeze-users --divert ${pam_mount_conf_divert} --rename --add ${pam_mount_conf}
+    dpkg-divert --package oi-lab-freeze-users --divert ${pam_mount_conf_divert} --rename --add ${pam_mount_conf}
 fi

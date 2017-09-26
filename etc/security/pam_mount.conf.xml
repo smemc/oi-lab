@@ -15,7 +15,7 @@
 		<!-- Volume definitions -->
 
 <msg-authpw>Password: </msg-authpw>
-<lclmount>/usr/sbin/oi-ubuntu-freeze-mount-wrapper %(USER) -t%(FSTYPE) "%(if %(OPTIONS),-o%(OPTIONS))" %(VOLUME) %(MNTPT)</lclmount>
+<lclmount>/usr/sbin/oi-lab-freeze-mount-wrapper %(USER) -t%(FSTYPE) "%(if %(OPTIONS),-o%(OPTIONS))" %(VOLUME) %(MNTPT)</lclmount>
 <volume sgrp="freeze" fstype="tmpfs" options="mode=0700,uid=%(USERUID),gid=%(USERGID)" mountpoint="~" />
 <volume sgrp="freeze" fstype="overlay" options="lowerdir=/home/freezetemplate,upperdir=/home/%(USER)/upper,workdir=/home/%(USER)/work" path="overlay" mountpoint="~" />
 <volume sgrp="freeze" options="bind" path="/var/freeze-data/documents" mountpoint="@DOCUMENTS@" />

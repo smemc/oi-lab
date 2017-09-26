@@ -1,0 +1,3 @@
+etc/security/pam_mount.conf.xml
+usr/bin/oi-lab-freeze-session-auto
+usr/sbin/oi-lab-freeze-mount-wrapper
