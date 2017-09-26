@@ -1,0 +1,18 @@
+Source: oi-ubuntu
+Section: unknown
+Priority: optional
+Maintainer: Laércio de Sousa <laerciosousa@sme-mogidascruzes.sp.gov.br>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.5
+Homepage: https://github.com/oiteam/oi-ubuntu
+Vcs-Git: git://github.com/oiteam/oi-ubuntu.git
+Vcs-Browser: https://github.com/oiteam/oi-ubuntu
+
+Package: oi-ubuntu-freeze-users
+Architecture: all
+Depends: ${misc:Depends}, bindfs, libpam-mount, python-gnomekeyring
+Description: automatic user creation and freezing for school labs
+ This package creates automatically some special users and
+ freezes their desktop configuration, so that all changes are
+ reverted after logout. Another special user is created for
+ templating the frozen ones' configuration.

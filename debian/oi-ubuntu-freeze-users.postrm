@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+pam_mount_conf="/etc/security/pam_mount.conf.xml"
+
+case "${1}" in
+    remove|abort-install|disappear)
+        dpkg-divert --package oi-ubuntu-freeze-users --rename --remove ${pam_mount_conf}
+    ;;
+esac
