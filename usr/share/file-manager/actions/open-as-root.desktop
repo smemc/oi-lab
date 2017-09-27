@@ -1,0 +1,41 @@
+[Desktop Entry]
+Type=Action
+Profiles=profile-folder;profile-non-plain-text;profile-plain-text;
+Name[pt_BR]=Abrir como administrador
+Name[en_US]=Open As Root
+Name[en]=Open As Root
+Name[C]=Open As Root
+Tooltip[pt_BR]=Abrir com privilégios administrativos
+Tooltip[en_US]=Open As Root
+Tooltip[en]=Open As Root
+Tooltip[C]=Open As Root
+ToolbarLabel[pt_BR]=Abrir como administrador
+ToolbarLabel[en_US]=Open As Root
+ToolbarLabel[en]=Open As Root
+ToolbarLabel[C]=Open As Root
+
+Icon=gtk-dialog-authentication
+
+[X-Action-Profile profile-folder]
+MimeTypes=inode/directory;
+Exec=org.lxde.pkexec.pcmanfm %u
+Name[pt_BR]=Abrir pasta como administrador
+Name[en_US]=Open Folder As Root
+Name[en]=Open Folder As Root
+Name[C]=Open Folder As Root
+
+[X-Action-Profile profile-non-plain-text]
+MimeTypes=all/allfiles;!text/plain;
+Exec=org.lxde.pkexec.pcmanfm %d
+Name[pt_BR]=Abrir como administrador
+Name[en_US]=Open Folder As Root
+Name[en]=Open Folder As Root
+Name[C]=Open Folder As Root
+
+[X-Action-Profile profile-plain-text]
+MimeTypes=text/plain;
+Exec=org.lxde.pkexec.leafpad %f
+Name[pt_BR]=Editar arquivo como administrador
+Name[en_US]=Edit File As Root
+Name[en]=Edit File As Root
+Name[C]=Edit File As Root

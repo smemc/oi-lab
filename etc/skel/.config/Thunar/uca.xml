@@ -1,0 +1,48 @@
+<?xml encoding="UTF-8" version="1.0"?>
+<actions>
+<action>
+	<icon>utilities-terminal</icon>
+	<name>Abra o Emulador de Terminal aqui</name>
+	<unique-id>1461173151717256-1</unique-id>
+	<command>xfce4-terminal --working-directory %f</command>
+	<description>Abre um emulador de terminal nesta pasta</description>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon>utilities-terminal</icon>
+	<name>Abra o Emulador de Terminal aqui (com privilégios administrativos)</name>
+	<unique-id>1462472571145703-7</unique-id>
+	<command>pkexec xfce4-terminal --working-directory %f</command>
+	<description>Abre um emulador de terminal nesta pasta como root</description>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon>filefind</icon>
+	<name>Localizar nesta pasta</name>
+	<unique-id>1461173151717332-2</unique-id>
+	<command>catfish --path=%f</command>
+	<description>Procurar arquivos dentro desta pasta</description>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon>system-file-manager</icon>
+	<name>Abrir esta pasta com privilégios administrativos</name>
+	<unique-id>1462472627191725-8</unique-id>
+	<command>pkexec thunar %f</command>
+	<description>Abre a pasta selecionada com privilégios administrativos</description>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon>accessories-text-editor</icon>
+	<name>Editar este aquivo com privilégios administrativos</name>
+	<unique-id>1462472637607390-9</unique-id>
+	<command>pkexec mousepad %f</command>
+	<description>Abre o arquivo selecionado em um editor com privilégios administrativos</description>
+	<patterns>*</patterns>
+	<text-files/>
+</action>
+</actions>

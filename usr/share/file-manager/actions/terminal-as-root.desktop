@@ -1,0 +1,21 @@
+[Desktop Entry]
+Type=Action
+Profiles=profile-folder;
+Name[pt_BR]=Abrir a pasta atual no terminal como administrador
+Name[en_US]=Open current folder in terminal As Root
+Name[en]=Open current folder in terminal As Root
+Name[C]=Open current folder in terminal As Root
+Tooltip[pt_BR]=Abrir a pasta atual no terminal com privilégios administrativos
+Tooltip[en_US]=Open current folder in terminal As Root
+Tooltip[en]=Open current folder in terminal As Root
+Tooltip[C]=Open current folder in terminal As Root
+ToolbarLabel[pt_BR]=Abrir a pasta atual no terminal como administrador
+ToolbarLabel[en_US]=Open current folder in terminal As Root
+ToolbarLabel[en]=Open current folder in terminal As Root
+ToolbarLabel[C]=Open current folder in terminal As Root
+
+Icon=utilities-terminal
+
+[X-Action-Profile profile-folder]
+MimeTypes=inode/directory;
+Exec=org.lxde.pkexec.lxterminal --working-directory=%f

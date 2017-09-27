@@ -11,6 +11,7 @@ Vcs-Browser: https://github.com/oiteam/oi-lab
 Package: oi-lab-freeze-users
 Architecture: all
 Depends: ${misc:Depends}, bindfs, libpam-mount, python-gnomekeyring
+Recommends: oi-lab-xubuntu-extra-settings | oi-lab-lubuntu-extra-settings
 Description: automatic user creation and freezing for school labs
  This package creates automatically some special users and
  freezes their desktop configuration, so that all changes are
@@ -40,3 +41,19 @@ Description: userful-rescue-live ISO (workaround for buggy SM501 cards)
  may affect some Silicon Motion SM501 video cards. It also includes a GRUB
  menu entry and a set of systemd service units to automate direct boot into
  userful-rescue-live ISO when the computer turns on.
+
+Package: oi-lab-lubuntu-extra-settings
+Architecture: all
+Depends: ${misc:Depends}
+Description: additional configuration for Lubuntu and other LXDE-based systems
+ This package provides extra settings for Lubuntu and other LXDE-based systems,
+ like context menu actions for opening Terminal/File Manager/Text Editor
+ as root.
+
+Package: oi-lab-xubuntu-extra-settings
+Architecture: all
+Depends: ${misc:Depends}
+Description: additional configuration for Xubuntu and other Xfce-based systems
+ This package provides extra settings for Xubuntu and other Xfce-based systems,
+ like context menu actions for opening Terminal/File Manager/Text Editor
+ as root.

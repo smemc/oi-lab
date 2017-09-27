@@ -1,0 +1,2 @@
+etc/skel/.config/Thunar
+usr/share/polkit-1/actions/org.xfce.*
