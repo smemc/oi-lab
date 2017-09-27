@@ -2,4 +2,4 @@ lib
 usr/bin/oi-lab-seat-attach-helper
 usr/bin/oi-lab-update-xorg-conf
 usr/bin/oi-lab-xorg-daemon
-usr/share
+usr/share/X11
