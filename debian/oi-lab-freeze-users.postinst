@@ -2,7 +2,7 @@
 set -e
 
 install() {
-    num_users=3
+    num_users=5
     freeze_template_user="freezetemplate"
     freeze_template_fullname="Modelo para Freeze"
 
