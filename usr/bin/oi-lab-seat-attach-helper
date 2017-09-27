@@ -1,0 +1,14 @@
+#!/bin/sh
+
+prefix="seat-sm501"
+sl="${prefix}-lvds"
+sv="${prefix}-vga"
+
+case "${1}" in
+    *1) seat_id=${sl}-1 ;;
+    *2) seat_id=${sv}-1 ;;
+    *3) [ $(lspci | grep -c "Silicon.Motion") -gt 1 ] && seat_id=${sl}-2 ;;
+    *4) [ $(lspci | grep -c "Silicon.Motion") -gt 1 ] && seat_id=${sv}-2 ;;
+esac
+
+[ -n "${seat_id}" ] && loginctl attach ${seat_id} /sys/${1}

@@ -1,0 +1,12 @@
+[Unit]
+Description=Cancel scheduled boot to Userful Rescue Live
+After=getty@tty1.service lightdm.service
+Before=systemd-reboot.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/grub-editenv - unset next_entry
+
+[Install]
+WantedBy=reboot.target

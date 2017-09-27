@@ -1,0 +1,17 @@
+Section "Device"
+    MatchSeat "__fake-seat-1__"
+    Identifier "Silicon Motion SM501 Video Card"
+    BusID "PCI:0:0:0"
+    Driver "siliconmotion"
+    Option "PanelSize" "1360x768"
+    Option "Dualhead" "true"
+    Option "monitor-LVDS" "Left Monitor"
+    Option "monitor-VGA" "Right Monitor"
+EndSection
+
+Section "Screen"
+    MatchSeat "__fake-seat-1__"
+    Identifier "Silicon Motion SM501 Screen"
+    Device "Silicon Motion SM501 Video Card"
+    DefaultDepth 16
+EndSection

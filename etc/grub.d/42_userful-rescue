@@ -1,0 +1,45 @@
+#!/bin/sh
+set -e
+
+prefix="/usr"
+exec_prefix="${prefix}"
+bindir="${exec_prefix}/bin"
+libdir="${exec_prefix}/lib"
+
+ISO_LOCATION="/boot/userful-rescue"
+
+if [ -r ${libdir}/grub/grub-mkconfig_lib ] ; then
+  . ${libdir}/grub/grub-mkconfig_lib
+elif [ -r /usr/share/grub/grub-mkconfig_lib ] ; then # fallback for e.g. Fedora
+  . /usr/share/grub/grub-mkconfig_lib
+elif [ -r /usr/share/grub2/grub-mkconfig_lib ] ; then # same for openSUSE
+  . /usr/share/grub2/grub-mkconfig_lib
+else
+  echo "Could not locate file grub-mkconfig_lib, please report a bug." >&2
+fi
+
+iso_list=""
+for file in "${ISO_LOCATION}"/*.iso ; do
+  if grub_file_is_not_garbage "${file}" ; then
+    iso_list="${file} ${iso_list} "
+  fi
+done
+
+for userful_iso in ${iso_list} ; do
+  rel_dirname="$(dirname $(make_system_path_relative_to_its_root ${userful_iso}))"
+  iso_file="$(basename ${userful_iso})"
+  device="$(${grub_probe} -t device ${userful_iso})"
+  grub_prep=$(prepare_grub_to_access_device "${device}" | sed -e "s/^/        /")
+  onstr="$(gettext_printf "(%s)" "${iso_file}")"
+  gettext_printf "Found Userful Rescue Live: %s\n" "${iso_file}" >&2
+
+  cat << EOF
+menuentry '$(echo "Userful Rescue Live" | grub_quote)' {
+${grub_prep}
+        set isofile="${rel_dirname%/}/${iso_file}"
+        loopback loop \$isofile
+        linux (loop)/casper/vmlinuz boot=casper iso-scan/filename=\$isofile
+        initrd (loop)/casper/initrd.img
+}
+EOF
+done

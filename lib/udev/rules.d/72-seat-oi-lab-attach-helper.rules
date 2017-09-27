@@ -1,0 +1,5 @@
+ACTION=="remove", GOTO="seat_end"
+
+SUBSYSTEM=="usb", TAG=="master-of-seat", ENV{ID_SEAT}=="", RUN+="/usr/bin/oi-lab-seat-attach-helper %p"
+
+LABEL="seat_end"

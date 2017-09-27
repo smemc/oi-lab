@@ -1,0 +1,4 @@
+#!/bin/sh
+num_cards=$(lspci | grep -c Silicon.Motion)
+[ ${num_cards} -ne 1 -a ${num_cards} -ne 2 ] && exit 2
+exec Xorg "${@}" -seat __fake-seat-${num_cards}__ -dpms -s 0 -nocursor

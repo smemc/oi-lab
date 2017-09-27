@@ -1,0 +1,15 @@
+#!/bin/bash
+if [ "$UID" -ne 0 ]
+then
+    "Este comando deve ser executado como root!"
+    exit 1
+fi
+read -r -p "O sistema irá reiniciar automaticamente. Deseja continuar? [s/N] " response
+response=${response,,}
+if [[ "$response" =~ ^(sim|s)$ ]]
+then
+    systemctl start userful-rescue-reboot.service
+    systemctl disable userful-rescue-reboot.service
+    systemctl disable userful-rescue-read-write.service
+    systemctl reboot
+fi

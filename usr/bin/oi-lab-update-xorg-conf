@@ -1,0 +1,28 @@
+#!/bin/bash
+###########################################################################
+# Updates BusID entries in passed xorg.conf files according to a given
+# pattern to be searched in 'lspci' output.
+#
+# Usage: oi-lab-update-xorg-conf PATTERN XORGCONF_1 [XORGCONF_2 ...]
+###########################################################################
+index=1
+pattern="${1}"
+rundir=/etc/X11/xorg.conf.d
+shift
+
+[ -d ${rundir} ] || mkdir -p ${rundir}
+
+while read -r line
+do
+    address=$(echo "${line}" | awk '{ sub(/\./, ":", $1) } { print $1 }')
+    echo VIDEO_ADDRESS_${index} = ${address}
+
+    for xorgconf in "${@}"
+    do
+        awk -v n=${index} -v address=${address} \
+            '$1 == "BusID" { if (++count == n) { sub(/[0-9]+:[0-9]+:[0-9]+/, address, $0) } } { print }' \
+            ${xorgconf} > ${rundir}/${xorgconf%.in}
+    done
+
+    index=$(( index + 1 ))
+done < <(lspci | grep "${pattern}")

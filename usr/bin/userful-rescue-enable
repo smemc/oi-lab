@@ -1,0 +1,15 @@
+#!/bin/bash
+if [ "$UID" -ne 0 ]
+then
+    "Este comando deve ser executado como root!"
+    exit 1
+fi
+read -r -p "O computador irá desligar automaticamente. Deseja continuar? [s/N] " response
+response=${response,,}
+if [[ "$response" =~ ^(sim|s)$ ]]
+then
+    systemctl enable userful-rescue-reboot.service
+    systemctl enable userful-rescue-read-write.service
+    systemctl start userful-rescue-read-write.service
+    systemctl poweroff
+fi

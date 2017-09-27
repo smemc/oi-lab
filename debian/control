@@ -16,3 +16,27 @@ Description: automatic user creation and freezing for school labs
  freezes their desktop configuration, so that all changes are
  reverted after logout. Another special user is created for
  templating the frozen ones' configuration.
+
+Package: oi-lab-proinfo-multi-seat-utils
+Architecture: all
+Depends: ${misc:Depends}, xserver-xorg-video-siliconmotion
+Recommends: xserver-xorg-video-nested, oi-lab-userful-rescue, zram-config
+Suggests: oi-lab-freeze-users
+Description: utilities for multi-seat support in some ProInfo computers
+ This package includes some scripts and configuration files
+ for multi-seat support in ProInfo-MEC computers with audio USB hubs from
+ ThinNetworks and video cards based on Silicon Motion SM501 chip, namely:
+ .
+ - pregão FNDE 83/2008 (up to 3 seats)
+ - pregão FNDE 68/2009 2º lote, with a pair of SM501 cards (up to 5 seats)
+ - pregão FNDE 71/2010 (up to 3 seats)
+
+Package: oi-lab-userful-rescue
+Architecture: all
+Depends: ${misc:Depends}
+Description: userful-rescue-live ISO (workaround for buggy SM501 cards)
+ This package provides a mini-ISO image of a live Ubuntu 12.04 system with
+ Userful Multiseat 5.0 pre-installed, destined to work around a bug which
+ may affect some Silicon Motion SM501 video cards. It also includes a GRUB
+ menu entry and a set of systemd service units to automate direct boot into
+ userful-rescue-live ISO when the computer turns on.

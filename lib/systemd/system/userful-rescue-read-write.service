@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule next boot to Userful Rescue Live on system power on
+After=local-fs.target
+Before=sysinit.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/grub-reboot "Userful Rescue Live"
+
+[Install]
+WantedBy=sysinit.target

@@ -1,0 +1,7 @@
+[Unit]
+Description=Service for Xorg server at display :90
+
+[Service]
+ExecStartPre=/usr/bin/oi-lab-update-xorg-conf Silicon.Motion /usr/share/X11/xorg.conf.d/oi-lab-sm501-1.conf.in /usr/share/X11/xorg.conf.d/oi-lab-sm501-2.conf.in
+ExecStart=/usr/bin/oi-lab-xorg-daemon :90
+SuccessExitStatus=0 1
