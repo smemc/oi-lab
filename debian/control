@@ -1,5 +1,5 @@
 Source: oi-lab
-Section: unknown
+Section: admin
 Priority: optional
 Maintainer: Laércio de Sousa <laerciosousa@sme-mogidascruzes.sp.gov.br>
 Build-Depends: debhelper (>= 9)
