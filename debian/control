@@ -34,7 +34,7 @@ Description: utilities for multi-seat support in some ProInfo computers
 
 Package: oi-lab-userful-rescue
 Architecture: all
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, curl
 Description: userful-rescue-live ISO (workaround for buggy SM501 cards)
  This package provides a mini-ISO image of a live Ubuntu 12.04 system with
  Userful Multiseat 5.0 pre-installed, destined to work around a bug which

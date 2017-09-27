@@ -2,6 +2,22 @@
 set -e
 
 install() {
+    ur_prefix="/boot/userful-rescue"
+    ur_file="userful-rescue-live-20160628-i386.iso"
+    ur_google_id='0B_0RrXAKZ1hbdnRvcGRuSFc2Nkk'
+    ur_google_prefix='https://drive.google.com/uc?export=download'
+
+    if ! [ -f "${ur_prefix}/${ur_file}" ]
+    then
+        (
+            [ -d "${ur_prefix}" ] || mkdir -p ${ur_prefix}
+            filename="$(curl -sc /tmp/gcookie "${ur_google_prefix}&id=${ur_google_id}" | grep -o '="uc-name.*</span>' | sed 's/.*">//;s/<.a> .*//')"
+            getcode="$(awk '/_warning_/ {print $NF}' /tmp/gcookie)"
+            curl -Lb /tmp/gcookie -C - "${ur_google_prefix}&confirm=${getcode}&id=${ur_google_id}" -o "${ur_prefix}/${ur_file}"
+            rm -f /tmp/gcookie
+        ) || exit 1
+    fi
+
     update-grub
 }
 
