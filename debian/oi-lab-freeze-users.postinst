@@ -1,40 +1,56 @@
 #!/bin/sh
 set -e
 
-mkdir -p -m0777 /var/freeze-data/{documents,music,pictures,videos}
+install() {
+    num_users=3
+    freeze_template_user="freezetemplate"
+    freeze_template_fullname="Modelo para Freeze"
 
-num_users=3
-freeze_template_user="freezetemplate"
-freeze_template_fullname="Modelo para Freeze"
-
-if ! getent group freeze >/dev/null
-then
-    addgroup --system freeze
-fi
-
-if ! getent passwd ${freeze_template_user} >/dev/null
-then
-    adduser --system --gecos "${freeze_template_fullname}" --shell /bin/bash ${freeze_template_user}
-    echo "${freeze_template_user}:freeze" | chpasswd
-fi
-
-su ${freeze_template_user} -c "env LANG=pt_BR.UTF-8 xdg-user-dirs-update"
-su ${freeze_template_user} -c "[ -d ~/.config/autostart ] || mkdir ~/.config/autostart || exit 1"
-su ${freeze_template_user} -c "echo -e '[Desktop Entry]\nType=Application\nName=Autostart commands for freeze sessions\nExec=oi-lab-freeze-session-auto' > ~/.config/autostart/oi-lab-freeze-session-auto.desktop"
-
-for i in blueman light-locker print-applet update-notifier xfce4-power-manager
-do
-    su ${freeze_template_user} -c "echo -e '[Desktop Entry]\nHidden=true' > ~/.config/autostart/${i}.desktop"
-done
-
-for i in $(seq ${num_users})
-do
-    username="aluno$(( i - 1 ))"
-    fullname="Aluno #$(( i - 1 ))"
-
-    if ! getent passwd ${username} >/dev/null
+    if ! getent group freeze >/dev/null
     then
-        adduser --system --gecos "${fullname}" --ingroup freeze --shell /bin/bash ${username}
-        echo "${username}:${username}" | chpasswd
+        addgroup --system freeze
     fi
-done
+
+    if ! getent passwd ${freeze_template_user} >/dev/null
+    then
+        adduser --system --gecos "${freeze_template_fullname}" --shell /bin/bash ${freeze_template_user}
+        echo "${freeze_template_user}:freeze" | chpasswd
+    fi
+
+    su ${freeze_template_user} -c "env LANG=pt_BR.UTF-8 xdg-user-dirs-update"
+    su ${freeze_template_user} -c "[ -d ~/.config/autostart ] || mkdir ~/.config/autostart || exit 1"
+    su ${freeze_template_user} -c "echo -e '[Desktop Entry]\nType=Application\nName=Autostart commands for freeze sessions\nExec=oi-lab-freeze-session-auto' > ~/.config/autostart/oi-lab-freeze-session-auto.desktop"
+
+    for i in blueman light-locker print-applet update-notifier xfce4-power-manager
+    do
+        su ${freeze_template_user} -c "echo -e '[Desktop Entry]\nHidden=true' > ~/.config/autostart/${i}.desktop"
+    done
+
+    for i in $(seq ${num_users})
+    do
+        username="aluno$(( i - 1 ))"
+        fullname="Aluno #$(( i - 1 ))"
+
+        if ! getent passwd ${username} >/dev/null
+        then
+            adduser --system --gecos "${fullname}" --ingroup freeze --shell /bin/bash ${username}
+           echo "${username}:${username}" | chpasswd
+        fi
+    done
+
+    mkdir -p -m0777 /var/freeze-data/{documents,music,pictures,videos}
+}
+
+case "${1}" in
+    configure)
+        install "${2}"
+        ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+
+    *)
+        echo "postinst called with unknown argument \`${1}'" >&2
+        exit 1
+        ;;
+esac

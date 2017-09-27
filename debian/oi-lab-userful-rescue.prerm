@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+
+remove() {
+    for i in reboot read-write
+    do
+        systemctl stop userful-rescue-${i}.service || true
+        systemctl disable userful-rescue-${i}.service || true
+    done
+}
+
+case "$1" in
+    remove|deconfigure)
+        remove
+	;;
+
+    *)
+        echo "prerm called with unknown argument \`$1'" >&2
+        exit 1
+esac
