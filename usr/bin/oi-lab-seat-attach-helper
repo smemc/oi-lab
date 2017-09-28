@@ -1,8 +1,8 @@
 #!/bin/sh
 
 s="seat-sm501"
-l="-lvds"
-v="-vga"
+l="lvds"
+v="vga"
 
 case "${1}" in
     *1) seat_id=${s}-0-${l} ;;
