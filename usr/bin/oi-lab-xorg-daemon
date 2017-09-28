@@ -1,4 +1,5 @@
 #!/bin/sh
-num_cards=$(lspci | grep -c Silicon.Motion)
-[ ${num_cards} -ne 1 -a ${num_cards} -ne 2 ] && exit 2
-exec Xorg "${@}" -seat __fake-seat-${num_cards}__ -dpms -s 0 -nocursor
+index="${1}"
+display=":$(( 90 + index ))"
+shift
+exec Xorg ${display} "${@}" -seat __fake-seat-sm501-${index}__ -dpms -s 0 -nocursor

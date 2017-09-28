@@ -1,6 +1,6 @@
 Section "Device"
-    MatchSeat "__fake-seat-1__"
-    Identifier "Silicon Motion SM501 Video Card"
+    MatchSeat "__fake-seat-sm501-@INDEX@__"
+    Identifier "Silicon Motion SM501 Video Card @INDEX@"
     BusID "PCI:0:0:0"
     Driver "siliconmotion"
     Option "PanelSize" "1360x768"
@@ -10,8 +10,8 @@ Section "Device"
 EndSection
 
 Section "Screen"
-    MatchSeat "__fake-seat-1__"
-    Identifier "Silicon Motion SM501 Screen"
-    Device "Silicon Motion SM501 Video Card"
+    MatchSeat "__fake-seat-sm501-@INDEX@__"
+    Identifier "Silicon Motion SM501 Screen @INDEX@"
+    Device "Silicon Motion SM501 Video Card @INDEX@"
     DefaultDepth 16
 EndSection

@@ -2,7 +2,9 @@
 set -e
 
 remove() {
-    udevadm trigger
+    systemctl stop oi-lab-xorg-daemon.service || true
+    systemctl stop oi-lab-xorg-daemon.socket || true
+    systemctl disable oi-lab-xorg-daemon.socket || true
 }
 
 case "$1" in
