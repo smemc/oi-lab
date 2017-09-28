@@ -11,7 +11,7 @@ Vcs-Browser: https://github.com/oiteam/oi-lab
 Package: oi-lab-freeze-users
 Architecture: all
 Depends: ${misc:Depends}, bindfs, libpam-mount, python-gnomekeyring
-Recommends: oi-lab-xubuntu-extra-settings | oi-lab-lubuntu-extra-settings
+Suggests: oi-lab-xubuntu-extra-settings | oi-lab-lubuntu-extra-settings
 Description: automatic user creation and freezing for school labs
  This package creates automatically some special users and
  freezes their desktop configuration, so that all changes are
@@ -21,8 +21,8 @@ Description: automatic user creation and freezing for school labs
 Package: oi-lab-proinfo-multi-seat-utils
 Architecture: all
 Depends: ${misc:Depends}, xserver-xorg-video-siliconmotion
-Recommends: xserver-xorg-video-nested, oi-lab-userful-rescue, zram-config
-Suggests: oi-lab-freeze-users
+Recommends: xserver-xorg-video-nested, zram-config
+Suggests: oi-lab-freeze-users, oi-lab-userful-rescue
 Description: utilities for multi-seat support in some ProInfo computers
  This package includes some scripts and configuration files
  for multi-seat support in ProInfo-MEC computers with audio USB hubs from
