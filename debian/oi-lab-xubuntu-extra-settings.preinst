@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+conf="/etc/xdg/xdg-xubuntu/Thunar/uca.xml"
+conf_divert="${conf}.original"
+
+if [ upgrade != "${1}" ] || dpkg --compare-versions "${2}" lt 0.0.1
+then
+    dpkg-divert --package oi-lab-xubuntu-extra-settings --divert ${conf_divert} --rename --add ${conf}
+fi

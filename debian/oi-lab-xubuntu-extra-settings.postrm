@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+conf="/etc/xdg/xdg-xubuntu/Thunar/uca.xml"
+
+case "${1}" in
+    remove|abort-install|disappear)
+        dpkg-divert --package oi-lab-xubuntu-extra-settings --rename --remove ${conf}
+        ;;
+
+    purge|upgrade|failed-upgrade|abort-upgrade)
+        ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+esac
