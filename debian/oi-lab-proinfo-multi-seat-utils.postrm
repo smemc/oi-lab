@@ -2,6 +2,7 @@
 set -e
 
 remove() {
+    loginctl flush-devices
     udevadm trigger
 }
 
