@@ -39,6 +39,30 @@ install() {
     done
 
     mkdir -p -m0777 /var/freeze-data/{documents,music,pictures,videos}
+
+    if ! [ -f /etc/lightdm/lightdm.conf.d/10-oi-lab-autologin.conf ]
+    then
+        [ -d /etc/lightdm/lightdm.conf.d ] || mkdir -p /etc/lightdm/lightdm.conf.d
+	cat >>/etc/lightdm/lightdm.conf.d/10-oi-lab-autologin.conf <<EOF
+#[Seat:*]
+#autologin-user-timeout=60
+
+#[Seat:seat0]
+#autologin-user=aluno0
+
+#[Seat:seat-sm501-0-lvds]
+#autologin-user=aluno1
+
+#[Seat:seat-sm501-0-vga]
+#autologin-user=aluno2
+
+#[Seat:seat-sm501-1-lvds]
+#autologin-user=aluno3
+
+#[Seat:seat-sm501-1-vga]
+#autologin-user=aluno4
+EOF
+    fi
 }
 
 case "${1}" in
