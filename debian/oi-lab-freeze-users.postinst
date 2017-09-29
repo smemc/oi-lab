@@ -8,12 +8,12 @@ install() {
 
     if ! getent group freeze >/dev/null
     then
-        addgroup --system freeze
+        addgroup freeze
     fi
 
     if ! getent passwd ${freeze_template_user} >/dev/null
     then
-        adduser --system --gecos "${freeze_template_fullname}" --shell /bin/bash ${freeze_template_user}
+        adduser --disabled-login --gecos "${freeze_template_fullname}" --shell /bin/bash ${freeze_template_user}
         echo "${freeze_template_user}:freeze" | chpasswd
     fi
 
@@ -33,8 +33,9 @@ install() {
 
         if ! getent passwd ${username} >/dev/null
         then
-            adduser --system --gecos "${fullname}" --ingroup freeze --shell /bin/bash ${username}
-           echo "${username}:${username}" | chpasswd
+            adduser --disabled-login --gecos "${fullname}" --shell /bin/bash ${username}
+	    adduser ${username} freeze
+            echo "${username}:${username}" | chpasswd
         fi
     done
 

@@ -13,7 +13,7 @@ purge() {
 
         if getent passwd ${username} >/dev/null
         then
-            deluser --system ${username}
+            deluser ${username}
         fi
 
         rm -rf /home/${username}
@@ -21,14 +21,14 @@ purge() {
 
     if getent passwd ${freeze_template_user} >/dev/null
     then
-        deluser --system ${freeze_template_user}
+        deluser ${freeze_template_user}
     fi
 
     rm -rf /home/${freeze_template_user}
 
     if getent group freeze >/dev/null
     then
-        delgroup --system freeze
+        delgroup freeze
     fi
 
     rm -rf /var/freeze-data
