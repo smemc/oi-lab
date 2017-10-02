@@ -1,4 +1,4 @@
-# Our project
+# About oi-lab
 Ubuntu extra configuration files and scripts for school labs in Mogi das Cruzes, SP, Brazil (including ProInfo multi-seat workstations)
 
 # Our packages
@@ -48,3 +48,17 @@ And here's the association table for computers with a **pair of SM501 cards (up 
 | USB 3 | SM501 2nd card LVDS output | `seat-sm501-1-lvds` |
 | USB 4 | SM501 2nd card VGA output  | `seat-sm501-1-vga` |
 | PS/2 ports | Integrated graphics video output | `seat0` |
+
+# Enabling/Disabling userful-rescue
+
+After installing `oi-lab-userful-rescue` package in computers with buggy SM501 video cards, you need to enable userful-rescue service manually. Just run
+```bash
+sudo userful-rescue-enable
+```
+
+After enabling userful-rescue boot scheduling service, your computer will be powered off automatically. When you turn it on again, it will automatically boot into userful-rescue live system, bringing your SM501 card back to normal, and then reboot back to your installed Ubuntu system.
+
+If you want to disable userful-rescue boot scheduling service later, just run
+```
+sudo userful-rescue-disable
+```
