@@ -13,6 +13,10 @@ Ubuntu extra configuration files and scripts for school labs in Mogi das Cruzes,
   
 * **oi-lab-userful-rescue**: downloads a live ISO image with a minimalistic Ubuntu 12.04 system with Userful Multiseat 5.0 pre-enabled, used to work around a bug with some SM501 graphics cards, adds a GRUB menu entry for booting directly to this ISO image, and installs some scripts/systemd service units to automate boot to this ISO (it will automatically reboot back to your main system) when computer turns on.
 
+# Recommended Ubuntu flavours for use with oi-lab packages
+* For **single- or 2-seat** computers with **less than 1 GB of RAM**, **3-seat** computers with **less than 2 GB of RAM**, or **5-seat** computers with **less than 4 GB of RAM**, we recommend **Lubuntu 16.04.3 (32-bit architecture)**.
+* For the other cases, you can choose freely between **Lubuntu, Xubuntu or Ubuntu MATE 16.04.3 or newer (64-bit architecture)**.
+
 # How to install oi-lab packages in Ubuntu 16.04 and newer (all flavours[*])
 1. Add our PPA to your repository lists:
 ```bash
