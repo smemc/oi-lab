@@ -2,7 +2,7 @@
 set -e
 
 install() {
-    num_cards=$(lspci | grep -c "Silicon.Motion")
+    num_cards=$(lspci | grep -c "Silicon.Motion" || true)
 
     if [ ${num_cards} -gt 0 ]
     then
