@@ -1,4 +1,6 @@
 etc/security/pam_mount.conf.xml
 etc/xdg/autostart/oi-lab-user-dirs-update-gtk.desktop
 usr/bin/oi-lab-freeze-session-auto
+usr/sbin/oi-lab-create-freeze-users
 usr/sbin/oi-lab-freeze-mount-wrapper
+usr/sbin/oi-lab-remove-freeze-users

@@ -1,0 +1,30 @@
+#!/bin/sh
+
+num_users=5
+freeze_template_user="freezetemplate"
+
+for i in $(seq ${num_users})
+do
+    username="aluno$(( i - 1 ))"
+
+    if getent passwd ${username} >/dev/null
+    then
+        deluser ${username}
+    fi
+
+    rm -rf /home/${username}
+done
+
+if getent passwd ${freeze_template_user} >/dev/null
+then
+    deluser ${freeze_template_user}
+fi
+
+rm -rf /home/${freeze_template_user}
+
+if getent group freeze >/dev/null
+then
+    delgroup freeze
+fi
+
+rm -rf /var/freeze-data
