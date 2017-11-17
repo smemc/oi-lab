@@ -2,18 +2,12 @@
 set -e
 
 remove() {
-    num_cards=$(lspci | grep -c "Silicon.Motion")
-
-    if [ ${num_cards} -gt 0 ]
-    then
-        for i in $(seq 0 $(( num_cards - 1 )))
-        do
-            systemctl stop oi-lab-xorg-daemon@${i}.service || true
-            systemctl stop oi-lab-xorg-daemon@${i}.socket || true
-            systemctl disable oi-lab-xorg-daemon@${i}.socket || true
-        done
-    fi
-
+    for i in 0 1
+    do
+        systemctl stop oi-lab-xorg-daemon@${i}.service || true
+        systemctl stop oi-lab-xorg-daemon@${i}.socket || true
+        systemctl disable oi-lab-xorg-daemon@${i}.socket || true
+    done
 }
 
 case "$1" in
