@@ -2,16 +2,11 @@
 set -e
 
 install() {
-    num_cards=$(lspci | grep -c "Silicon.Motion" || true)
-
-    if [ ${num_cards} -gt 0 ]
-    then
-        for i in $(seq 0 $(( num_cards - 1 )))
-        do
-	    systemctl enable oi-lab-xorg-daemon@${i}.socket
-            systemctl start oi-lab-xorg-daemon@${i}.socket
-        done
-    fi
+    for i in 0 1
+    do
+        systemctl enable oi-lab-xorg-daemon@${i}.socket
+        systemctl start oi-lab-xorg-daemon@${i}.socket
+    done
 
     udevadm trigger
 }
