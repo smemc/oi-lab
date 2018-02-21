@@ -1,6 +1,15 @@
 #!/bin/sh
 
 # Before starting compton, we need to disable Xfce native compositor, if present.
-[ -x /usr/bin/xfconf-query ] && xfconf-query -c xfwm4 -p /general/use_compositing -s false
+if [ -x /usr/bin/xfconf-query ]
+then
+    query="xfconf-query -c xfwm4 -p /general/use_compositing"
+    ${query} -s false
+
+    while [ $(${query}) != "false" ]
+    do
+        continue
+    done
+fi
 
 exec compton "${@}"
