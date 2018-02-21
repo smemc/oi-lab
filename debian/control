@@ -42,9 +42,17 @@ Description: userful-rescue-live ISO (workaround for buggy SM501 cards)
  menu entry and a set of systemd service units to automate direct boot into
  userful-rescue-live ISO when the computer turns on.
 
+Package: oi-lab-compton
+Architecture: all
+Depends: ${misc:Depends}, compton
+Description: OI-Lab configuration for Compton window compositing manager
+ This package provides extra settings for Compton window compositing manager
+ to best fit our low-level Silicon Motion SM501 graphics cards.
+
 Package: oi-lab-lubuntu-extra-settings
 Architecture: all
 Depends: ${misc:Depends}
+Recommends: oi-lab-compton
 Description: additional configuration for Lubuntu and other LXDE-based systems
  This package provides extra settings for Lubuntu and other LXDE-based systems,
  like context menu actions for opening Terminal/File Manager/Text Editor
@@ -53,6 +61,7 @@ Description: additional configuration for Lubuntu and other LXDE-based systems
 Package: oi-lab-xubuntu-extra-settings
 Architecture: all
 Depends: ${misc:Depends}
+Recommends: oi-lab-compton
 Description: additional configuration for Xubuntu and other Xfce-based systems
  This package provides extra settings for Xubuntu and other Xfce-based systems,
  like context menu actions for opening Terminal/File Manager/Text Editor
