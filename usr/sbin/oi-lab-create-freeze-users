@@ -37,7 +37,10 @@ do
     fi
 done
 
-mkdir -p -m0777 /var/freeze-data/{documents,music,pictures,videos}
+for dir in documents music pictures videos
+do
+    mkdir -p -m0777 /var/freeze-data/${dir}
+done
 
 if ! [ -f /etc/lightdm/lightdm.conf.d/10-oi-lab-autologin.conf ]
 then
