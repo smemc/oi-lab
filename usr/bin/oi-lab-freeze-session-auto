@@ -1,6 +1,6 @@
 #!/bin/bash
 ###########################################################################
-# Copyright (C) 2016-2017 Prefeitura de Mogi das Cruzes, SP, Brazil
+# Copyright (C) 2016-2018 Prefeitura de Mogi das Cruzes, SP, Brazil
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 # On Debian GNU/Linux systems, the complete text of the GNU General
 # Public License can be found in `/usr/share/common-licenses/GPL'.
 ###########################################################################
+FREEZE_SESSION_AUTO_DIR=${HOME}/.freeze-session-auto.d
+
 # Don't run this script for freezetemplate itself.
 [ "${USER}" = "freezetemplate" ] && exit 0
 
@@ -33,3 +35,17 @@ find ${HOME}/.mozilla -type f -name secmod.db -delete
 # Replace all "freezetemplate" occurrences with current username,
 # in all relevant files.
 find ${HOME}/.[^.]* -type f -exec sed -i -e "s/freezetemplate/${USER}/g" {} \;
+
+# Load user extensions
+if [ -d ${FREEZE_SESSION_AUTO_DIR} ]
+then
+    for FILE in ${FREEZE_SESSION_AUTO_DIR}/*
+    do
+        if [ -r ${FILE} ]
+        then
+          . ${FILE}
+        fi
+    done
+
+    unset FILE
+fi
