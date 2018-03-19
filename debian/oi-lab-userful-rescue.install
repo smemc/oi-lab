@@ -1,2 +1,3 @@
 etc/grub.d
+lib/systemd/system/userful-rescue-*
 usr/bin/userful-rescue-*
