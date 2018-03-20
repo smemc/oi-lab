@@ -1,2 +1,0 @@
-# USB Audio Hub ThinNetworks
-SUBSYSTEM=="usb", ATTR{idVendor}=="05e3", ATTR{idProduct}=="0608", TAG+="master-of-seat"
