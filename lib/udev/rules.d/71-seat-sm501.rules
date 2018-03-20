@@ -1,5 +1,5 @@
 # Convenção: associar arquivos de dispositivo desta regra à saída LVDS da placa SM501
-KERNEL=="sm501-fb.[0-9]*", SUBSYSTEM=="platform", TAG+="seat", TAG+="master-of-seat", 
+KERNEL=="sm501-fb.[0-9]*", SUBSYSTEM=="platform", TAG+="seat", TAG+="master-of-seat"
 
 # Convenção: associar arquivos de dispositivo desta regra à saída VGA da placa SM501
 KERNEL=="sm501-usb.[0-9]*", SUBSYSTEM=="platform", TAG+="seat", TAG+="master-of-seat"
