@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
  * USA.
  */
-/*
- * Compilation hint: gcc write-message.c -I/usr/include/cairo $(pkg-config --libs xcb-aux,cairo) -o write-message
- */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,22 +67,22 @@ cairo_t *set_font(xcb_connection_t *connection,
                                        height);
     cr = cairo_create(surface);
 
-    cairo_select_font_face(cr, "Arial",
+    cairo_select_font_face(cr, "sans-serif",
                            CAIRO_FONT_SLANT_NORMAL,
                            CAIRO_FONT_WEIGHT_NORMAL);
 
-    cairo_set_font_size(cr, 32.0);
+    cairo_set_font_size(cr, 36.0);
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
 
     return cr;
 }
 
-void set_text_position(cairo_t *cr,
-                       unsigned int string_list_length,
-                       const char **string_list,
-                       unsigned int first_index,
-                       unsigned int width,
-                       unsigned int height)
+double set_text_position(cairo_t *cr,
+                         unsigned int string_list_length,
+                         const char **string_list,
+                         unsigned int first_index,
+                         unsigned int width,
+                         unsigned int height)
 {
     int i;
     double x;
@@ -106,17 +103,20 @@ void set_text_position(cairo_t *cr,
     y = y_all_extents + height / 2 - (extents.height / 2 + extents.y_bearing);
 
     cairo_move_to(cr, x, y);
+
+    return y;
 }
 
-void draw_text(cairo_t *cr,
-               unsigned int string_list_length,
-               const char **string_list,
-               unsigned int first_index,
-               unsigned int width)
+void write_message(cairo_t *cr,
+                   unsigned int string_list_length,
+                   const char **string_list,
+                   unsigned int first_index,
+                   unsigned int width,
+                   double text_y)
 {
     int i;
     double x;
-    double y;
+    double y = text_y;
     cairo_text_extents_t extents;
 
     for (i = first_index; i < string_list_length; i++)
@@ -138,6 +138,7 @@ int main(int argc, const char *argv[])
     int win_y;
     unsigned int width;
     unsigned int height;
+    double y;
 
     xcb_connection_t *connection;
     xcb_screen_t *screen;
@@ -159,8 +160,8 @@ int main(int argc, const char *argv[])
     xcb_clear_area(connection, 0, window, 0, 0, width, height);
 
     cr = set_font(connection, screen, window, width, height);
-    set_text_position(cr, argc, argv, 2, width, height);
-    draw_text(cr, argc, argv, 2, width);
+    y = set_text_position(cr, argc, argv, 2, width, height);
+    write_message(cr, argc, argv, 2, width, y);
 
     xcb_aux_sync(connection);
     xcb_disconnect(connection);
