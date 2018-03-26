@@ -23,9 +23,6 @@
  * and waits forever.
  * parameters: widthxheight+x+y, window name. 
  */
-/*
- * Compilation hint: gcc seat-parent-window.c $(pkg-config --libs xcb-aux) -o seat-parent-window
- */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,7 +83,6 @@ void create_window(xcb_connection_t *connection,
     uint32_t mask;
     uint32_t values[1];
     xcb_window_t window;
-    xcb_void_cookie_t cookie;
 
     mask = XCB_CW_BACK_PIXEL;
     values[0] = screen->black_pixel;
@@ -94,16 +90,16 @@ void create_window(xcb_connection_t *connection,
     create_graphics_context(connection, screen);
 
     window = xcb_generate_id(connection);
-    cookie = xcb_create_window(connection,
-                               XCB_COPY_FROM_PARENT,
-                               window,
-                               screen->root,
-                               0, 0,
-                               width, height,
-                               0,
-                               XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                               screen->root_visual,
-                               mask, values);
+    xcb_create_window(connection,
+                      XCB_COPY_FROM_PARENT,
+                      window,
+                      screen->root,
+                      0, 0,
+                      width, height,
+                      0,
+                      XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                      screen->root_visual,
+                      mask, values);
 
     set_window_wm_name(connection, window, name);
 
