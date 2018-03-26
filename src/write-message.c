@@ -28,10 +28,9 @@
 #include <cairo.h>
 #include <cairo-xcb.h>
 
-void get_window_geometry(xcb_connection_t *connection,
-                         xcb_window_t window,
-                         int *x, int *y,
-                         unsigned int *width, unsigned int *height)
+void get_window_size(xcb_connection_t *connection,
+                     xcb_window_t window,
+                     unsigned int *width, unsigned int *height)
 {
     xcb_get_geometry_cookie_t cookie;
     xcb_get_geometry_reply_t *reply;
@@ -41,8 +40,6 @@ void get_window_geometry(xcb_connection_t *connection,
 
     if (reply != NULL)
     {
-        *x = reply->x;
-        *y = reply->y;
         *width = reply->width;
         *height = reply->height;
 
@@ -134,8 +131,6 @@ void write_message(cairo_t *cr,
 int main(int argc, const char *argv[])
 {
     int screen_number;
-    int win_x;
-    int win_y;
     unsigned int width;
     unsigned int height;
     double y;
@@ -156,7 +151,7 @@ int main(int argc, const char *argv[])
     screen = xcb_aux_get_screen(connection, screen_number);
     sscanf(argv[1], "%x", &window);
 
-    get_window_geometry(connection, window, &win_x, &win_y, &width, &height);
+    get_window_size(connection, window, &width, &height);
     xcb_clear_area(connection, 0, window, 0, 0, width, height);
 
     cr = set_font(connection, screen, window, width, height);
