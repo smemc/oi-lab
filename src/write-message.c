@@ -71,7 +71,7 @@ cairo_t *set_font(xcb_connection_t *connection,
                            CAIRO_FONT_SLANT_NORMAL,
                            CAIRO_FONT_WEIGHT_NORMAL);
 
-    cairo_set_font_size(cr, 36.0);
+    cairo_set_font_size(cr, 48.0);
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
 
     return cr;
