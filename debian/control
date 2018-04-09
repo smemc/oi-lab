@@ -19,7 +19,8 @@ Description: automatic user creation and freezing for school labs
  templating the frozen ones' configuration.
 
 Package: oi-lab-proinfo-multi-seat-utils
-Architecture: all
+Architecture: any
+Build-Depends: libcairo2-dev, libxcb1-dev, libxcb-util0-dev
 Depends: ${misc:Depends}, xserver-xorg-video-siliconmotion
 Recommends: xserver-xorg-video-nested, zram-config
 Suggests: oi-lab-freeze-users, oi-lab-userful-rescue

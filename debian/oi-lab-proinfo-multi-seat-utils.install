@@ -3,4 +3,5 @@ lib/systemd/system/oi-lab-xorg-daemon@.s*
 usr/bin/oi-lab-seat-attach-helper
 usr/bin/oi-lab-update-xorg-conf
 usr/bin/oi-lab-xorg-daemon
+usr/sbin/oi-lab-multi-seat-config-*
 usr/share/X11
