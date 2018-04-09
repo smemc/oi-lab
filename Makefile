@@ -1,17 +1,20 @@
-# FIXME: this Makefile should not make the tree even if there is no need to do
-# it
-
 CC = gcc
 CFLAGS = -O2 -Wall
+ORIG = src
+DEST = usr/sbin
 
-all: binaries
+all: usr/sbin/oi-lab-multi-seat-config-read-devices \
+     usr/sbin/oi-lab-multi-seat-config-message \
+     usr/sbin/oi-lab-multi-seat-config-window
 
-binaries: src/read-devices.c src/write-message.c src/seat-parent-window.c
-	$(CC) $(CFLAGS) src/read-devices.c -o src/read-devices
-	$(CC) $(CFLAGS) src/write-message.c -o src/write-message `pkg-config --libs --cflags cairo xcb-aux`
-	$(CC) $(CFLAGS) src/seat-parent-window.c -o src/seat-parent-window `pkg-config --libs --cflags xcb-aux`
+$(DEST)/oi-lab-multi-seat-config-read-devices: $(ORIG)/oi-lab-multi-seat-config-read-devices.c
+	$(CC) $(CFLAGS) $< -o $@
+
+$(DEST)/oi-lab-multi-seat-config-message: $(ORIG)/oi-lab-multi-seat-config-message.c
+	$(CC) $(CFLAGS) $< -o $@ `pkg-config --libs --cflags cairo xcb-aux`
+
+$(DEST)/oi-lab-multi-seat-config-window: $(ORIG)/oi-lab-multi-seat-config-window.c
+	$(CC) $(CFLAGS) $< -o $@ `pkg-config --libs --cflags xcb-aux`
 
 clean:
-	rm -f src/read-devices
-	rm -f src/write-message
-	rm -f src/seat-parent-window
+	rm -f usr/sbin/oi-lab-multi-seat-config-read-devices usr/sbin/oi-lab-multi-seat-config-message usr/sbin/oi-lab-multi-seat-config-window
