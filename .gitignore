@@ -1,0 +1,4 @@
+usr/sbin/oi-lab-multi-seat-config-message
+usr/sbin/oi-lab-multi-seat-config-read-devices
+usr/sbin/oi-lab-multi-seat-config-window
+debian/*.debhelper.log
