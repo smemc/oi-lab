@@ -2,7 +2,7 @@ Source: oi-lab
 Section: admin
 Priority: optional
 Maintainer: Laércio de Sousa <laerciosousa@sme-mogidascruzes.sp.gov.br>
-Build-Depends: debhelper (>= 9)
+Build-Depends: debhelper (>= 9), libcairo2-dev, libxcb1-dev, libxcb-util0-dev, pkg-config
 Standards-Version: 3.9.5
 Homepage: https://github.com/oiteam/oi-lab
 Vcs-Git: git://github.com/oiteam/oi-lab.git
@@ -20,8 +20,7 @@ Description: automatic user creation and freezing for school labs
 
 Package: oi-lab-proinfo-multi-seat-utils
 Architecture: any
-Build-Depends: libcairo2-dev, libxcb1-dev, libxcb-util0-dev, pkg-config
-Depends: ${misc:Depends}, xserver-xorg-video-siliconmotion
+Depends: ${shlibs:Depends}, ${misc:Depends}, xserver-xorg-video-siliconmotion
 Recommends: xserver-xorg-video-nested, zram-config
 Suggests: oi-lab-freeze-users, oi-lab-userful-rescue
 Description: utilities for multi-seat support in some ProInfo computers
