@@ -100,41 +100,11 @@ create_secondary_card_windows () {
 	export DISPLAY=$FAKE_DISPLAY
 
 	for i in ${OUTPUTS[@]}; do
-		# Display for each output
-		DISPLAY_XORGS[$WINDOW_COUNTER]=:$((WINDOW_COUNTER+10))
+		# Get output geometry
+		OUTPUT_GEOMETRY=$(xrandr -q | grep $i | cut -d' ' -f4)
 
-		# Run Xephyr to type in this output
-		Xephyr ${DISPLAY_XORGS[$WINDOW_COUNTER]} -output $i -noxv &
-		pid=$!
-
-		# Guarantees the Xephyr execution
-		xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-		EXIT_CODE=$?
-		N_ATTEMPT=0
-		while test $EXIT_CODE -ne 0; do
-			sleep 0.5
-			xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-			EXIT_CODE=$?
-			if ! kill -0 "${pid}" >/dev/null 2>&1; then
-				Xephyr ${DISPLAY_XORGS[$WINDOW_COUNTER]} -output $i -noxv &
-				pid=$!
-			fi
-
-			if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
-				echo "[Error] Run Xephyr ${DISPLAY_XORGS[$WINDOW_COUNTER]} failed."
-				exit 1
-	    fi
-
-			N_ATTEMPT=$(($N_ATTEMPT+1))
-		done
-
-		# Export display and create a window to write on this output
-		export DISPLAY=${DISPLAY_XORGS[$WINDOW_COUNTER]}
-
-		$CREATE_WINDOW
-
-		# Again: the fake_seat display needs to be exported
-		export DISPLAY=$FAKE_DISPLAY
+		# Run config window to type in this output
+		$CREATE_WINDOW $OUTPUT_GEOMETRY
 	done
 }
 
@@ -172,13 +142,9 @@ while test $EXIT_CODE -ne 0; do
 	sleep 0.5
 	xdpyinfo -display $FAKE_DISPLAY
 	EXIT_CODE=$?
-	if ! kill -0 "${pid}" >/dev/null 2>&1; then
-		Xorg $FAKE_DISPLAY -seat $FAKE_SEAT -dpms -s 0 -nocursor &
-		pid=$!
-	fi
 
 	if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
-		echo "[Error] Run Xorg $FAKE_DISPLAY -seat $FAKE_SEAT failed."
+		echo "[Error] xdpyinfo -display $FAKE_DISPLAY failed."
 		exit 1
 	fi
 
