@@ -96,12 +96,12 @@ create_onboard_window () {
 }
 
 create_secondary_card_windows () {
-	# The fake_seat display needs to be exported to run the Xephyr that communicate with it
+	# The fake_seat display needs to be exported to run the window that communicate with it
 	export DISPLAY=$FAKE_DISPLAY
 
 	for i in ${OUTPUTS[@]}; do
 		# Get output geometry
-		OUTPUT_GEOMETRY=$(xrandr -q | grep $i | cut -d' ' -f4)
+		OUTPUT_GEOMETRY=$(xrandr -q | grep $i | grep -Po '\d+x\d+\+\d+\+\d+')
 
 		# Run config window to type in this output
 		$CREATE_WINDOW $OUTPUT_GEOMETRY
@@ -167,6 +167,9 @@ mkdir -p $MC3SL_DEVICES
 configure_devices
 
 # Wait until all seats are configured
+# FIXME: Find a better way to enumerate seat master devices (not restricted to this SM501 case).
+#        For a graphics card with well-supported KMS driver,
+#        enumerating /dev/fb* devices should be enough.
 SECONDARY_SEATS=( $(find /sys/devices -name "sm501-[fb|usb]*") )
 N_SEATS_LISTED=$(( ${#SECONDARY_SEATS[@]} + ONBOARD ))
 N_CONFIGURABLE_SEATS=${N_SEATS_LISTED}
@@ -175,6 +178,8 @@ CONFIGURED_SEATS=0
 KEYBOARDS=( $(oi-lab-multi-seat-config-detect-keyboard) )
 N_KEYBOARDS_LISTED=${#KEYBOARDS[@]}
 
+# If there are less connected keyboards than available seat master devices,
+# leave remaining seat master devices unconfigured.
 if test $N_KEYBOARDS_LISTED -lt $N_SEATS_LISTED; then
 	N_CONFIGURABLE_SEATS=${N_KEYBOARDS_LISTED}
 fi
