@@ -1,4 +1,5 @@
 lib/udev
+lib/systemd/system/lightdm.service.d
 lib/systemd/system/oi-lab-multi-seat-config-xorg@.s*
 lib/systemd/system/oi-lab-xorg-daemon@.s*
 usr/bin/oi-lab-seat-attach-helper
