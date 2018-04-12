@@ -1,0 +1,6 @@
+[Unit]
+Description=Service for Xorg server :%i for multi-seat configuration
+
+[Service]
+ExecStart=/usr/bin/Xorg :%i -dpms -s 0 -noreset
+SuccessExitStatus=0 1

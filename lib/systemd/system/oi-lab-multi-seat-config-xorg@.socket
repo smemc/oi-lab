@@ -1,0 +1,8 @@
+[Unit]
+Description=Socket for Xorg server :%i for multi-seat configuration
+
+[Socket]
+ListenStream=/tmp/.X11-unix/X%i
+
+[Install]
+WantedBy=sockets.target
