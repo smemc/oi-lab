@@ -29,23 +29,28 @@
 NEW_WINDOW="oi-lab-multi-seat-config-window" # it receives as parameter <RESOLUTION>x<X_Initial>+<Y_Inicial>
 WRITE_MESSAGE="oi-lab-multi-seat-config-message" # it receives as parameter <ID_WINDOW> <Message>
 
+get_output_geometry () {
+	xrandr -display ${DISPLAY_XORGS[$WINDOW_COUNTER]} | grep $1 | grep -Po '\d+x\d+\+\d+\+\d+'
+}
+
 create_window () {
 	#### Description: Create a window in a specific display.
 	#### ID_WINDOWS and WINDOW_COUNTER are declared in "multiseat-controller".
-        #### $1: window geometry
+        #### $1: target RandR output
 
 	# Try to access Xorg
-	xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-	EXIT_CODE=$?
-	while test $EXIT_CODE -ne 0; do
-		sleep 0.5
-		xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-		EXIT_CODE=$?
-	done
+#	xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
+#	EXIT_CODE=$?
+#	while test $EXIT_CODE -ne 0; do
+#		sleep 0.5
+#		xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
+#		EXIT_CODE=$?
+#	done
 
 	# Creates a new window for writing on this output
 	WINDOW_NAME=w$(($WINDOW_COUNTER+1))
-	$NEW_WINDOW $1 $WINDOW_NAME &
+        WINDOW_GEOMETRY=$(get_output_geometry $1)
+	$NEW_WINDOW $WINDOW_GEOMETRY $WINDOW_NAME &
 
 	# Try to access the window
 	xwininfo -name $WINDOW_NAME
@@ -80,5 +85,5 @@ write_window() {
 			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione a tecla F$(($2+1))" ;;
 		press_mouse)
 			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione o botão esquerdo do mouse" ;;
-    esac
+	esac
 }

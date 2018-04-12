@@ -25,7 +25,7 @@
 #### Written by: Stephanie Briere Americo - sba16@c3sl.inf.ufpr.br on 2017.
 #### Modified by: Laércio de Sousa - laerciosousa@sme-mogidascruzes.sp.gov.br on 2018.
 
-set -x
+#set -x
 
 ## Auxiliary scripts
 source /usr/share/oi-lab-multi-seat-config/find-devices
@@ -62,31 +62,31 @@ create_onboard_window () {
 		DISPLAY_XORGS[$WINDOW_COUNTER]=:$(($WINDOW_COUNTER+10))
 		export DISPLAY=${DISPLAY_XORGS[$WINDOW_COUNTER]}
 
-		Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} &
-		pid=$!
+#		Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} -noreset &
+#		pid=$!
 
 		# Guarantees the Xorg execution
-		xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-		EXIT_CODE=$?
-		N_ATTEMPT=0
-		while test $EXIT_CODE -ne 0; do
-			sleep 0.5
-			xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-			EXIT_CODE=$?
-			if ! kill -0 "${pid}" >/dev/null 2>&1; then
-				Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} &
-				pid=$!
-			fi
+#		xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
+#		EXIT_CODE=$?
+#		N_ATTEMPT=0
+#		while test $EXIT_CODE -ne 0; do
+#			sleep 0.5
+#			xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
+#			EXIT_CODE=$?
+#			if ! kill -0 "${pid}" >/dev/null 2>&1; then
+#				Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} &
+#				pid=$!
+#			fi
+#
+#			if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
+#				echo "[Error] Run Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} failed."
+#				exit 1
+#	    fi
+#
+#			N_ATTEMPT=$(($N_ATTEMPT+1))
+#		done
 
-			if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
-				echo "[Error] Run Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} failed."
-				exit 1
-	    fi
-
-			N_ATTEMPT=$(($N_ATTEMPT+1))
-		done
-
-		$CREATE_WINDOW
+		$CREATE_WINDOW primary
 
 		ONBOARD=1
 	else
@@ -100,11 +100,28 @@ create_secondary_card_windows () {
 	export DISPLAY=$FAKE_DISPLAY
 
 	for i in ${OUTPUTS[@]}; do
-		# Get output geometry
-		OUTPUT_GEOMETRY=$(xrandr -q | grep $i | grep -Po '\d+x\d+\+\d+\+\d+')
+		# Display for each output
+		DISPLAY_XORGS[$WINDOW_COUNTER]=$FAKE_DISPLAY
+
+		# Guarantees the Xorg-daemon execution
+#		xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
+#		EXIT_CODE=$?
+#		N_ATTEMPT=0
+#		while test $EXIT_CODE -ne 0; do
+#			sleep 0.5
+#			xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
+#			EXIT_CODE=$?
+#
+#			if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
+#				echo "[Error] Communication with Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} failed."
+#				exit 1
+#			fi
+#
+#			N_ATTEMPT=$(( N_ATTEMPT + 1 ))
+#		done
 
 		# Run config window to type in this output
-		$CREATE_WINDOW $OUTPUT_GEOMETRY
+		$CREATE_WINDOW $i
 	done
 }
 
@@ -135,21 +152,21 @@ kill_jobs () {
 
 ############ BEGIN ############
 
-xdpyinfo -display $FAKE_DISPLAY
-EXIT_CODE=$?
-N_ATTEMPT=0
-while test $EXIT_CODE -ne 0; do
-	sleep 0.5
-	xdpyinfo -display $FAKE_DISPLAY
-	EXIT_CODE=$?
-
-	if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
-		echo "[Error] xdpyinfo -display $FAKE_DISPLAY failed."
-		exit 1
-	fi
-
-	N_ATTEMPT=$(($N_ATTEMPT+1))
-done
+#xdpyinfo -display $FAKE_DISPLAY
+#EXIT_CODE=$?
+#N_ATTEMPT=0
+#while test $EXIT_CODE -ne 0; do
+#	sleep 0.5
+#	xdpyinfo -display $FAKE_DISPLAY
+#	EXIT_CODE=$?
+#
+#	if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
+#		echo "[Error] xdpyinfo -display $FAKE_DISPLAY failed."
+#		exit 1
+#	fi
+#
+#	N_ATTEMPT=$(($N_ATTEMPT+1))
+#done
 
 udevadm trigger
 udevadm settle --timeout=10
@@ -198,5 +215,8 @@ done
 
 # Cleans the system by killing all the processes and files it has created
 kill_jobs
+
+systemctl stop oi-lab-multi-seat-config-xorg@10.service
+systemctl stop oi-lab-multi-seat-config-xorg@10.socket
 
 exit 0
