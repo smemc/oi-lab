@@ -178,22 +178,6 @@ kill_jobs () {
 udevadm trigger
 udevadm settle --timeout=10
 
-# If the onboard is connected, it creates a window to write on the screen
-create_onboard_window
-
-# Creates the necessary windows to write on the screen of each output of the secondary card
-create_secondary_card_windows 0
-
-if test ${#SECONDARY_SEATS[@]} -gt 2; then
-	create_secondary_card_windows 1
-fi
-
-# We'll use it to save a shortcut to devices that have already been paired
-mkdir -p $MC3SL_DEVICES
-
-# Run configuration script for each seat
-configure_devices
-
 # Wait until all seats are configured
 N_SEATS_LISTED=$(( ${#SECONDARY_SEATS[@]} + ONBOARD ))
 N_CONFIGURABLE_SEATS=${N_SEATS_LISTED}
@@ -209,17 +193,35 @@ if test $N_KEYBOARDS_LISTED -lt $N_SEATS_LISTED; then
 	N_CONFIGURABLE_SEATS=${N_KEYBOARDS_LISTED}
 fi
 
-while test $CONFIGURED_SEATS -lt $N_CONFIGURABLE_SEATS; do
-	wait -n ${PID_FIND_DEVICES[@]}
-	EXIT_CODE=$?
+if test $N_CONFIGURABLE_SEATS -gt 1; then
+	# If the onboard is connected, it creates a window to write on the screen
+	create_onboard_window
 
-	if test $EXIT_CODE -eq 0; then
-		CONFIGURED_SEATS=$(( CONFIGURED_SEATS + 1 ))
-	elif test $EXIT_CODE -eq 2; then
-		echo "[Error] Can not configure output: find-devices failed."
-		exit 1
+	# Creates the necessary windows to write on the screen of each output of the secondary card
+	create_secondary_card_windows 0
+
+	if test ${#SECONDARY_SEATS[@]} -gt 2; then
+		create_secondary_card_windows 1
 	fi
-done
+
+	# We'll use it to save a shortcut to devices that have already been paired
+	mkdir -p $MC3SL_DEVICES
+
+	# Run configuration script for each seat
+	configure_devices
+
+	while test $CONFIGURED_SEATS -lt $N_CONFIGURABLE_SEATS; do
+		wait -n ${PID_FIND_DEVICES[@]}
+		EXIT_CODE=$?
+
+		if test $EXIT_CODE -eq 0; then
+			CONFIGURED_SEATS=$(( CONFIGURED_SEATS + 1 ))
+		elif test $EXIT_CODE -eq 2; then
+			echo "[Error] Can not configure output: find-devices failed."
+			exit 1
+		fi
+	done
+fi
 
 # Cleans the system by killing all the processes and files it has created
 kill_jobs
