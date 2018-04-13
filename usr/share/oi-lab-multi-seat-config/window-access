@@ -78,12 +78,12 @@ write_window() {
 	export DISPLAY=${DISPLAY_XORGS[$2]}
 	case $1 in
 		ok)
-			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Monitor configurado, aguarde o restante ficar pronto" ;;
+			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Terminal pronto para uso!" "Aguarde a configuração dos terminais restantes..." ;;
 		wait_load)
-			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Aguarde" ;;
+			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Aguarde..." ;;
 		press_key)
-			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione a tecla F$2" ;;
+			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione a tecla F$2" "no teclado em frente a este monitor..." ;;
 		press_mouse)
-			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione o botão esquerdo do mouse" ;;
+			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione o botão esquerdo do mouse" "em frente a este monitor..." ;;
 	esac
 }
