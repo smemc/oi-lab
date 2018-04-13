@@ -33,8 +33,6 @@ WRITE_W="write_window" # "window-access"
 
 ## Variables
 declare -a SEATS_LISTED # save the name of the existing seats
-# List all existing seats
-SEATS_LISTED=( seat0 "${SEAT_NAMES[@]}" )
 
 find_keyboard () {
 	fKey=$1 # key that this script should expect to be pressed

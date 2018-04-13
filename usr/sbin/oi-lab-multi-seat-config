@@ -27,10 +27,6 @@
 
 #set -x
 
-## Auxiliary scripts
-source /usr/share/oi-lab-multi-seat-config/find-devices
-source /usr/share/oi-lab-multi-seat-config/window-access
-
 ## Path constants
 MC3SL_DEVICES="/usr/sbin/devices" # shortcut to devices that have already been paired
 
@@ -40,10 +36,9 @@ CREATE_WINDOW="create_window" # "window-access"
 WRITE_WINDOW="write_window" # "window-access"
 
 ## Macros
-FAKE_DISPLAY=:90 # display to access fake-seat (secondary card)
-FAKE_SEAT="__fake-seat-1__"
-OUTPUTS=("LVDS" "VGA") # output options
-SEAT_NAMES=("seat-sm501-0-lvds" "seat-sm501-0-vga") # secondary seat names
+FAKE_DISPLAYS=( :90 :91 ) # display to access fake-seat (secondary card)
+OUTPUTS=( LVDS VGA ) # output options
+SEAT_NAMES=( seat-sm501-0-lvds seat-sm501-0-vga seat-sm501-1-lvds seat-sm501-1-vga ) # secondary seat names
 MAX_ATTEMPTS=100
 
 ## Variables
@@ -54,6 +49,15 @@ ONBOARD=0 # if the onboard is connected
 declare -a DISPLAY_XORGS # saves the display of the Xorg launched processes
 declare -a ID_WINDOWS # saves the created window ids (used in window-access)
 declare -a PID_FIND_DEVICES # saves the pid from the launched configuration processes
+
+# FIXME: Find a better way to enumerate seat master devices (not restricted to this SM501 case).
+#        For a graphics card with well-supported KMS driver,
+#        enumerating /dev/fb* devices should be enough.
+SECONDARY_SEATS=( $(find /sys/devices -name "sm501-[fb|usb]*" | sort) )
+
+## Auxiliary scripts
+source /usr/share/oi-lab-multi-seat-config/find-devices
+source /usr/share/oi-lab-multi-seat-config/window-access
 
 create_onboard_window () {
 	# Checks if there is a device connected to the onboard card
@@ -96,12 +100,11 @@ create_onboard_window () {
 }
 
 create_secondary_card_windows () {
-	# The fake_seat display needs to be exported to run the window that communicate with it
-	export DISPLAY=$FAKE_DISPLAY
-
+	#### $1: fake seat display
 	for i in ${OUTPUTS[@]}; do
 		# Display for each output
-		DISPLAY_XORGS[$WINDOW_COUNTER]=$FAKE_DISPLAY
+		DISPLAY_XORGS[$WINDOW_COUNTER]=${FAKE_DISPLAYS[$1]}
+		export DISPLAY=${FAKE_DISPLAYS[$1]}
 
 		# Guarantees the Xorg-daemon execution
 #		xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
@@ -179,7 +182,11 @@ udevadm settle --timeout=10
 create_onboard_window
 
 # Creates the necessary windows to write on the screen of each output of the secondary card
-create_secondary_card_windows
+create_secondary_card_windows 0
+
+if test ${#SECONDARY_SEATS[@]} -gt 2; then
+	create_secondary_card_windows 1
+fi
 
 # We'll use it to save a shortcut to devices that have already been paired
 mkdir -p $MC3SL_DEVICES
@@ -188,10 +195,6 @@ mkdir -p $MC3SL_DEVICES
 configure_devices
 
 # Wait until all seats are configured
-# FIXME: Find a better way to enumerate seat master devices (not restricted to this SM501 case).
-#        For a graphics card with well-supported KMS driver,
-#        enumerating /dev/fb* devices should be enough.
-SECONDARY_SEATS=( $(find /sys/devices -name "sm501-[fb|usb]*") )
 N_SEATS_LISTED=$(( ${#SECONDARY_SEATS[@]} + ONBOARD ))
 N_CONFIGURABLE_SEATS=${N_SEATS_LISTED}
 # Assume that seat0 is already pre-configured.
