@@ -222,6 +222,5 @@ done
 kill_jobs
 
 systemctl stop oi-lab-multi-seat-config-xorg@10.service
-systemctl stop oi-lab-multi-seat-config-xorg@10.socket
 
 exit 0

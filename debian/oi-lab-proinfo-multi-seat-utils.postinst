@@ -1,14 +1,15 @@
 #!/bin/sh
 set -e
 
-install() {
+install () {
     for i in 0 1
     do
         systemctl enable oi-lab-xorg-daemon@${i}.socket
         systemctl start oi-lab-xorg-daemon@${i}.socket
     done
 
-    udevadm trigger
+    systemctl enable oi-lab-multi-seat-config-xorg@10.socket
+    systemctl start oi-lab-multi-seat-config-xorg@10.socket
 }
 
 case "${1}" in

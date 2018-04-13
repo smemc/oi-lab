@@ -1,13 +1,17 @@
 #!/bin/sh
 set -e
 
-remove() {
+remove () {
     for i in 0 1
     do
         systemctl stop oi-lab-xorg-daemon@${i}.service || true
         systemctl stop oi-lab-xorg-daemon@${i}.socket || true
         systemctl disable oi-lab-xorg-daemon@${i}.socket || true
     done
+
+    systemctl stop oi-lab-multi-seat-config-xorg@10.service || true
+    systemctl stop oi-lab-multi-seat-config-xorg@10.socket || true
+    systemctl disable oi-lab-multi-seat-config-xorg@10.socket || true
 }
 
 case "$1" in
