@@ -1,8 +1,6 @@
 [Unit]
 Description=OI-Lab multi-seat configuration
 ConditionPathExistsGlob=!/etc/udev/rules.d/72-seat-*
-Wants=oi-lab-multi-seat-config-xorg@10.socket
-After=oi-lab-multi-seat-config-xorg@10.socket
 
 [Service]
 Type=oneshot
