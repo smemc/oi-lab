@@ -128,11 +128,15 @@ create_secondary_card_windows () {
 configure_devices () {
 	COUNT=0
 	for WINDOW in `seq $WINDOW_ID_INIT $(($WINDOW_COUNTER-1))`; do
-		$FIND_KEYBOARD $(($WINDOW+1)) &
-		PID_FIND_DEVICES[$COUNT]=$!
-		COUNT=$(($COUNT+1))
+		if test $WINDOW -eq 0; then
+			$WRITE_WINDOW ok $WINDOW
+		else
+			$FIND_KEYBOARD $WINDOW &
+			PID_FIND_DEVICES[$COUNT]=$!
+			COUNT=$(($COUNT+1))
 
-		$WRITE_WINDOW press_key $WINDOW
+			$WRITE_WINDOW press_key $WINDOW
+		fi
 	done
 }
 
@@ -190,7 +194,8 @@ configure_devices
 SECONDARY_SEATS=( $(find /sys/devices -name "sm501-[fb|usb]*") )
 N_SEATS_LISTED=$(( ${#SECONDARY_SEATS[@]} + ONBOARD ))
 N_CONFIGURABLE_SEATS=${N_SEATS_LISTED}
-CONFIGURED_SEATS=0
+# Assume that seat0 is already pre-configured.
+CONFIGURED_SEATS=1
 
 KEYBOARDS=( $(oi-lab-multi-seat-config-detect-keyboard) )
 N_KEYBOARDS_LISTED=${#KEYBOARDS[@]}

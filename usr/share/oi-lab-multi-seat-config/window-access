@@ -82,7 +82,7 @@ write_window() {
 		wait_load)
 			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Aguarde" ;;
 		press_key)
-			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione a tecla F$(($2+1))" ;;
+			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione a tecla F$2" ;;
 		press_mouse)
 			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione o botão esquerdo do mouse" ;;
 	esac

@@ -38,7 +38,7 @@ SEATS_LISTED=( seat0 "${SEAT_NAMES[@]}" )
 
 find_keyboard () {
 	fKey=$1 # key that this script should expect to be pressed
-	wNum=$(($fKey-1)) # position in the window control vector
+	wNum=$fKey # position in the window control vector
 
 	CREATED=0
 	while test $CREATED -eq 0; do
@@ -98,11 +98,9 @@ find_keyboard () {
 		$WRITE_W ok $wNum
 
 		# Attach devices to a new seat
-		if test $fKey -gt 1; then
-			loginctl attach ${SEATS_LISTED[$((fKey-1))]} ${SECONDARY_SEATS[$((fKey-2))]} $PARENT_SYSPATH
-			udevadm control --reload-rules
-			udevadm trigger
-		fi
+		loginctl attach ${SEAT_NAMES[$((fKey-1))]} ${SECONDARY_SEATS[$((fKey-1))]} $PARENT_SYSPATH
+		udevadm control --reload-rules
+		udevadm trigger
 
 		exit 0
 	else
