@@ -33,13 +33,12 @@ WRITE_W="write_window" # "window-access"
 
 ## Variables
 declare -a SEATS_LISTED # save the name of the existing seats
+# List all existing seats
+SEATS_LISTED=( seat0 "${SEAT_NAMES[@]}" )
 
 find_keyboard () {
 	fKey=$1 # key that this script should expect to be pressed
 	wNum=$(($fKey-1)) # position in the window control vector
-
-	# List all existing seats
-	SEATS_LISTED=(seat0 $(loginctl list-seats | grep seat-))
 
 	CREATED=0
 	while test $CREATED -eq 0; do
@@ -93,19 +92,16 @@ find_keyboard () {
 	SYS_DEV=/sys$(udevadm info $PRESSED | grep 'P:' | cut -d ' ' -f2- | sed -r 's/event.*$//g')
 
 	if test -n "$SYS_DEV"; then
-		# Now we know the seat/output
-		SEAT_NAME=$(udevadm info -p $SYS_DEV | grep ID_SEAT | cut -d '=' -f2)
-
-		# Sometimes the devices that belong to seat0 do not have ID_SEAT
-		if test -z "$SEAT_NAME"; then
-		    SEAT_NAME=seat0
-		fi
+		# Get parent USB hub syspath
+		PARENT_SYSPATH=$(echo $SYS_DEV | cut -d/ -f1-7)
 
 		$WRITE_W ok $wNum
 
-		# Write in configuration file
+		# Attach devices to a new seat
 		if test $fKey -gt 1; then
-			echo -e "[Seat:$SEAT_NAME]\nxserver-command=xephyr-wrapper :90.0 -output ${OUTPUTS[$((wNum-1))]}\n" >> $CONF
+			loginctl attach ${SEATS_LISTED[$((fKey-1))]} ${SECONDARY_SEATS[$((fKey-2))]} $PARENT_SYSPATH
+			udevadm control --reload-rules
+			udevadm trigger
 		fi
 
 		exit 0
