@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-num_users=5
+num_users=${1:-5}
 freeze_template_user="freezetemplate"
 freeze_template_fullname="Modelo para Freeze"
 
@@ -24,10 +24,10 @@ do
     su ${freeze_template_user} -c "echo -e '[Desktop Entry]\nHidden=true' > ~/.config/autostart/${i}.desktop"
 done
 
-for i in $(seq ${num_users})
+for i in $(seq -w 0 $(( num_users - 1 )))
 do
-    username="aluno$(( i - 1 ))"
-    fullname="Aluno #$(( i - 1 ))"
+    username="aluno${i}"
+    fullname="Aluno #${i}"
 
     if ! getent passwd ${username} >/dev/null
     then
@@ -50,18 +50,18 @@ then
 #autologin-user-timeout=60
 
 #[Seat:seat0]
-#autologin-user=aluno0
+#autologin-user=aluno00
 
 #[Seat:seat-sm501-0-lvds]
-#autologin-user=aluno1
+#autologin-user=aluno01
 
 #[Seat:seat-sm501-0-vga]
-#autologin-user=aluno2
+#autologin-user=aluno02
 
 #[Seat:seat-sm501-1-lvds]
-#autologin-user=aluno3
+#autologin-user=aluno03
 
 #[Seat:seat-sm501-1-vga]
-#autologin-user=aluno4
+#autologin-user=aluno04
 EOF
 fi
