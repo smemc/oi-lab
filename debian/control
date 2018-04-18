@@ -79,7 +79,7 @@ Depends: ${misc:Depends},
          kgeography,
          ktouch,
          marble,
-         kstarts,
+         kstars,
          kbruch,
          kig
 Suggests: omnitux,
