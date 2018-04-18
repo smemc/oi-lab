@@ -52,7 +52,7 @@ Description: OI-Lab configuration for Compton window compositing manager
 Package: oi-lab-lubuntu-extra-settings
 Architecture: all
 Depends: ${misc:Depends}
-Recommends: oi-lab-compton
+Recommends: oi-lab-compton, lubuntu-extra-sessions
 Description: additional configuration for Lubuntu and other LXDE-based systems
  This package provides extra settings for Lubuntu and other LXDE-based systems,
  like context menu actions for opening Terminal/File Manager/Text Editor
@@ -66,3 +66,32 @@ Description: additional configuration for Xubuntu and other Xfce-based systems
  This package provides extra settings for Xubuntu and other Xfce-based systems,
  like context menu actions for opening Terminal/File Manager/Text Editor
  as root.
+
+Package: oi-lab-edu-meta
+Architecture: all
+Depends: ${misc:Depends},
+         gcompris-qt,
+         tuxpaint, tuxpaint-config, tuxpaint-stamps-default,
+         ktuberling, kde-l10n-ptbr,
+         childsplay, childsplay-alphabet-sounds-pt,
+         tuxmath,
+         tuxtype,
+         kgeography,
+         ktouch,
+         marble,
+         kstarts,
+         kbruch,
+         kig
+Suggests: omnitux,
+          kolourpaint,
+          inkscape,
+          calibre,
+          einstein,
+          geogebra,
+          chemtool,
+          dia,
+          fritzing,
+          pencil2d
+Description: selected educational packages for OI-Lab project
+ This metapackage installs a selection of educational packages derived
+ from ubuntu-edu-preschool and ubuntu-edu-primary
