@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+case "${1}" in
+    remove|abort-install|disappear)
+        for session in Lubuntu Lubuntu-Netbook
+        do
+            conf="/etc/xdg/lxsession/${session}/desktop.conf"
+            dpkg-divert --package oi-lab-lubuntu-extra-settings --rename --remove ${conf}
+        done
+        ;;
+
+    purge|upgrade|failed-upgrade|abort-upgrade)
+        ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+esac
