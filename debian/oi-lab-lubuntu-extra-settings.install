@@ -1,5 +1,8 @@
 etc/skel
+lib/systemd/system/oi-lab-autoupgrade.*
+lib/systemd/system/systemd-poweroff.timer
 usr/bin/org.lxde.pkexec.*
+usr/sbin/oi-lab-autoupgrade
 usr/share/file-manager/
 usr/share/lightdm/lightdm.conf.d/
 usr/share/polkit-1/actions/org.lxde.*
