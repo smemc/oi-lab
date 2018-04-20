@@ -121,35 +121,35 @@
 				<Not><Category>Languages</Category></Not>
 			</And>
 		</Include>
-		<Menu>
+		<!-- <Menu>
 			<Name>Science</Name>
-			<Directory>lxde-science.directory</Directory>
+			<Directory>lxde-science.directory</Directory> -->
 			<Include>
 				<And>
 					<Category>Science</Category>
 					<Not><Category>Math</Category></Not>
 				</And>
 			</Include>
-		</Menu>
-		<Menu>
+		<!-- </Menu> -->
+		<!-- <Menu>
 			<Name>Math</Name>
-			<Directory>lxde-math.directory</Directory>
+			<Directory>lxde-math.directory</Directory> -->
 			<Include>
 				<And>
 					<Category>Math</Category>
 				</And>
 			</Include>
 
-		</Menu>
-		<Menu>
+		<!-- </Menu> -->
+		<!-- <Menu>
 			<Name>Language</Name>
-			<Directory>lxde-language.directory</Directory>
+			<Directory>lxde-language.directory</Directory> -->
 			<Include>
 				<And>
 					<Category>Languages</Category>
 				</And>
 			</Include>
-		</Menu>
+		<!-- </Menu> -->
 	</Menu>
 	<Menu>
 		<Name>Play</Name>
