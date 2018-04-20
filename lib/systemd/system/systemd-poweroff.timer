@@ -1,0 +1,9 @@
+[Unit]
+Description=Desligar o sistema
+
+[Timer]
+OnCalendar=*-*-* 17:00:00
+
+[Install]
+WantedBy=timers.target
+
