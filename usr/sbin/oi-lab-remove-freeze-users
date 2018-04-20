@@ -3,7 +3,7 @@
 num_users=${1:-5}
 freeze_template_user="freezetemplate"
 
-for i in $(seq -w 0 $(( num_users - 1 )))
+for i in $(seq -w ${num_users})
 do
     username="aluno${i}"
 

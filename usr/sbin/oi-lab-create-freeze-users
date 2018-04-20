@@ -24,7 +24,7 @@ do
     su ${freeze_template_user} -c "echo -e '[Desktop Entry]\nHidden=true' > ~/.config/autostart/${i}.desktop"
 done
 
-for i in $(seq -w 0 $(( num_users - 1 )))
+for i in $(seq -w ${num_users})
 do
     username="aluno${i}"
     fullname="Aluno #${i}"
@@ -47,21 +47,21 @@ then
     [ -d /etc/lightdm/lightdm.conf.d ] || mkdir -p /etc/lightdm/lightdm.conf.d
     cat >>/etc/lightdm/lightdm.conf.d/10-oi-lab-autologin.conf <<EOF
 #[Seat:*]
-#autologin-user-timeout=60
+#autologin-user-timeout=20
 
 #[Seat:seat0]
-#autologin-user=aluno00
+#autologin-user=aluno1
 
 #[Seat:seat-sm501-0-lvds]
-#autologin-user=aluno01
+#autologin-user=aluno2
 
 #[Seat:seat-sm501-0-vga]
-#autologin-user=aluno02
+#autologin-user=aluno3
 
 #[Seat:seat-sm501-1-lvds]
-#autologin-user=aluno03
+#autologin-user=aluno4
 
 #[Seat:seat-sm501-1-vga]
-#autologin-user=aluno04
+#autologin-user=aluno5
 EOF
 fi
