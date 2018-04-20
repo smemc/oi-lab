@@ -1,0 +1,7 @@
+[Unit]
+Description=Executar atualização do sistema
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/oi-lab-autoupgrade
+
