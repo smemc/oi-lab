@@ -1,4 +1,5 @@
 etc/skel
+etc/xdg/menus
 lib/systemd/system/oi-lab-autoupgrade.*
 lib/systemd/system/systemd-poweroff.timer
 usr/bin/org.lxde.pkexec.*

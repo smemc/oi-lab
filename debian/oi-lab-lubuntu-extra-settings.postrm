@@ -3,9 +3,9 @@ set -e
 
 case "${1}" in
     remove|abort-install|disappear)
-        for session in Lubuntu Lubuntu-Netbook
+        for fragment in lxsession/Lubuntu/desktop.conf lxsession/Lubuntu-Netbook/desktop.conf menus/lxlauncher-applications.menu
         do
-            conf="/etc/xdg/lxsession/${session}/desktop.conf"
+            conf="/etc/xdg/${fragment}"
             dpkg-divert --package oi-lab-lubuntu-extra-settings --rename --remove ${conf}
         done
         ;;
