@@ -52,7 +52,7 @@ Description: OI-Lab configuration for Compton window compositing manager
 Package: oi-lab-lubuntu-extra-settings
 Architecture: all
 Depends: ${misc:Depends}
-Recommends: oi-lab-compton, lubuntu-extra-sessions, qt5ct
+Recommends: oi-lab-compton, lubuntu-extra-sessions, numlockx, qt5ct
 Description: additional configuration for Lubuntu and other LXDE-based systems
  This package provides extra settings for Lubuntu and other LXDE-based systems,
  like context menu actions for opening Terminal/File Manager/Text Editor
