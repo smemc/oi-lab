@@ -11,39 +11,15 @@ HOME=/home/${user}
 dirconf=${HOME}/.config/user-dirs.dirs
 shift
 
-[ -f ${dirconf} ] && source ${dirconf}
+[[ -f ${dirconf} ]] && source ${dirconf}
 
-while [ ${1} ]
+while [[ ${1} ]]
 do
   case "${1}" in
     -toverlay)
       mkdir ${!#}/{upper,work}
       chown $(stat -c '%U:%G' ${!#}) ${!#}/{upper,work}
       options+=("${1}")
-    ;;
-    @DESKTOP@)
-      options+=("${XDG_DESKTOP_DIR}")
-    ;;
-    @DOCUMENTS@)
-      options+=("${XDG_DOCUMENTS_DIR}")
-    ;;
-    @DOWNLOAD@)
-      options+=("${XDG_DOWNLOAD_DIR}")
-    ;;
-    @PICTURES@)
-      options+=("${XDG_PICTURES_DIR}")
-    ;;
-    @PUBLICSHARE@)
-      options+=("${XDG_PUBLICSHARE_DIR}")
-    ;;
-    @MUSIC@)
-      options+=("${XDG_MUSIC_DIR}")
-    ;;
-    @TEMPLATES@)
-      options+=("${XDG_TEMPLATES_DIR}")
-    ;;
-    @VIDEOS@)
-      options+=("${XDG_VIDEOS_DIR}")
     ;;
     *)
       options+=("${1}")

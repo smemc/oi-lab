@@ -18,10 +18,6 @@
 <lclmount>/usr/sbin/oi-lab-freeze-mount-wrapper %(USER) -t%(FSTYPE) "%(if %(OPTIONS),-o%(OPTIONS))" %(VOLUME) %(MNTPT)</lclmount>
 <volume sgrp="freeze" fstype="tmpfs" options="mode=0700,uid=%(USERUID),gid=%(USERGID)" mountpoint="~" />
 <volume sgrp="freeze" fstype="overlay" options="lowerdir=/home/freezetemplate,upperdir=/home/%(USER)/upper,workdir=/home/%(USER)/work" path="overlay" mountpoint="~" />
-<volume sgrp="freeze" options="bind" path="/var/freeze-data/documents" mountpoint="@DOCUMENTS@" />
-<volume sgrp="freeze" options="bind" path="/var/freeze-data/pictures" mountpoint="@PICTURES@" />
-<volume sgrp="freeze" options="bind" path="/var/freeze-data/music" mountpoint="@MUSIC@" />
-<volume sgrp="freeze" options="bind" path="/var/freeze-data/videos" mountpoint="@VIDEOS@" />
 <volume sgrp="freeze" fstype="fuse.bindfs" options="force-user=%(USER),force-group=%(GROUP)" path="~" mountpoint="~" />
 
 		<!-- pam_mount parameters: General tunables -->

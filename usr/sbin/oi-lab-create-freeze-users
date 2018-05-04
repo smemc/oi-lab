@@ -4,6 +4,11 @@ num_users=${1:-5}
 freeze_template_user="freezetemplate"
 freeze_template_fullname="Modelo para Freeze"
 
+for dir in documents music pictures videos
+do
+    mkdir -p -m0777 /var/freeze-data/${dir}
+done
+
 if ! getent group freeze >/dev/null
 then
     addgroup freeze
@@ -18,6 +23,7 @@ fi
 su ${freeze_template_user} -c "env LANG=pt_BR.UTF-8 xdg-user-dirs-update"
 su ${freeze_template_user} -c "[ -d ~/.config/autostart ] || mkdir ~/.config/autostart || exit 1"
 su ${freeze_template_user} -c "echo -e '[Desktop Entry]\nType=Application\nName=Autostart commands for freeze sessions\nExec=oi-lab-freeze-session-auto' > ~/.config/autostart/oi-lab-freeze-session-auto.desktop"
+su ${freeze_template_user} -c 'for dir in DOCUMENTS PICTURES MUSIC VIDEOS; do x=$(xdg-user-dir ${dir}); rmdir ${x}; ln -s /var/freeze-data/${dir,,} ${x}; done'
 
 for i in blueman light-locker print-applet update-notifier xfce4-power-manager
 do
@@ -35,11 +41,6 @@ do
         adduser ${username} freeze
         echo "${username}:${username}" | chpasswd
     fi
-done
-
-for dir in documents music pictures videos
-do
-    mkdir -p -m0777 /var/freeze-data/${dir}
 done
 
 if ! [ -f /etc/lightdm/lightdm.conf.d/10-oi-lab-autologin.conf ]
