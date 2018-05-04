@@ -10,7 +10,8 @@ Vcs-Browser: https://github.com/oiteam/oi-lab
 
 Package: oi-lab-freeze-users
 Architecture: all
-Depends: ${misc:Depends}, bindfs, libpam-mount, python-gnomekeyring, xdg-user-dirs-gtk
+Depends: ${misc:Depends}, bindfs, libpam-mount, hxtools, xdg-user-dirs-gtk
+Recommends: python-gnomekeyring
 Suggests: oi-lab-xubuntu-extra-settings | oi-lab-lubuntu-extra-settings
 Description: automatic user creation and freezing for school labs
  This package creates automatically some special users and
