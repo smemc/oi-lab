@@ -148,7 +148,7 @@ kill_jobs () {
 		rm lock*
 	fi
 
-	if test -n "$(ls $MC3SL_DEVICES)"; then
+	if test -d "$MC3SL_DEVICES"; then
 		rm -rf $MC3SL_DEVICES/
 	fi
 
