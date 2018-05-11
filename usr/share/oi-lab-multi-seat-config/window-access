@@ -28,6 +28,7 @@
 ## Script/function in other file
 NEW_WINDOW="oi-lab-multi-seat-config-window" # it receives as parameter <RESOLUTION>x<X_Initial>+<Y_Inicial>
 WRITE_MESSAGE="oi-lab-multi-seat-config-message" # it receives as parameter <ID_WINDOW> <Message>
+MAX_ATTEMPTS=100
 
 get_output_geometry () {
 	xrandr -display ${DISPLAY_XORGS[$WINDOW_COUNTER]} | grep $1 | grep -Po '\d+x\d+\+\d+\+\d+'
@@ -55,10 +56,18 @@ create_window () {
 	# Try to access the window
 	xwininfo -name $WINDOW_NAME
 	EXIT_CODE=$?
+	N_ATTEMPT=0
 	while test $EXIT_CODE -ne 0; do
 		sleep 0.5
 		xwininfo -name $WINDOW_NAME
 		EXIT_CODE=$?
+
+		if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
+			echo "[Error] Failed to create window $WINDOW_NAME."
+			exit 1
+	    fi
+
+		N_ATTEMPT=$(( N_ATTEMPT + 1 ))
 	done
 
 	# Get the window id
