@@ -26,73 +26,66 @@
 #### Modified by: Laércio de Sousa - laerciosousa@sme-mogidascruzes.sp.gov.br on 2018.
 
 ## Script/function in other file
-NEW_WINDOW="oi-lab-multi-seat-config-window" # it receives as parameter <RESOLUTION>x<X_Initial>+<Y_Inicial>
-WRITE_MESSAGE="oi-lab-multi-seat-config-message" # it receives as parameter <ID_WINDOW> <Message>
+NEW_WINDOW=oi-lab-multi-seat-config-window # it receives as parameter <RESOLUTION>x<X_Initial>+<Y_Inicial>
+WRITE_MESSAGE=oi-lab-multi-seat-config-message # it receives as parameter <ID_WINDOW> <Message>
 MAX_ATTEMPTS=100
 
 get_output_geometry () {
-	xrandr -display ${DISPLAY_XORGS[$WINDOW_COUNTER]} | grep $1 | grep -Po '\d+x\d+\+\d+\+\d+'
+    xrandr -display ${DISPLAY_XORGS[$WINDOW_COUNTER]} | grep ${1} | grep -Po '\d+x\d+\+\d+\+\d+'
 }
 
 create_window () {
-	#### Description: Create a window in a specific display.
-	#### ID_WINDOWS and WINDOW_COUNTER are declared in "multiseat-controller".
-        #### $1: target RandR output
+    #### Description: Create a window in a specific display.
+    #### ID_WINDOWS and WINDOW_COUNTER are declared in "multiseat-controller".
+    #### $1: target RandR output
 
-	# Try to access Xorg
-#	xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-#	EXIT_CODE=$?
-#	while test $EXIT_CODE -ne 0; do
-#		sleep 0.5
-#		xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-#		EXIT_CODE=$?
-#	done
+    # Creates a new window for writing on this output
+    WINDOW_NAME=w$(( WINDOW_COUNTER + 1 ))
+    WINDOW_GEOMETRY=$(get_output_geometry ${1})
+    ${NEW_WINDOW} ${WINDOW_GEOMETRY} ${WINDOW_NAME} &
 
-	# Creates a new window for writing on this output
-	WINDOW_NAME=w$(($WINDOW_COUNTER+1))
-        WINDOW_GEOMETRY=$(get_output_geometry $1)
-	$NEW_WINDOW $WINDOW_GEOMETRY $WINDOW_NAME &
+    # Try to access the window
+    xwininfo -name ${WINDOW_NAME}
+    EXIT_CODE=${?}
+    N_ATTEMPT=0
+    while (( EXIT_CODE != 0 ))
+    do
+        sleep 0.5
+        xwininfo -name ${WINDOW_NAME}
+        EXIT_CODE=${?}
 
-	# Try to access the window
-	xwininfo -name $WINDOW_NAME
-	EXIT_CODE=$?
-	N_ATTEMPT=0
-	while test $EXIT_CODE -ne 0; do
-		sleep 0.5
-		xwininfo -name $WINDOW_NAME
-		EXIT_CODE=$?
+        if (( N_ATTEMPT > MAX_ATTEMPTS ))
+        then
+            echo "[Error] Failed to create window ${WINDOW_NAME}."
+            exit 1
+        fi
 
-		if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
-			echo "[Error] Failed to create window $WINDOW_NAME."
-			exit 1
-	    fi
+        N_ATTEMPT=$(( N_ATTEMPT + 1 ))
+    done
 
-		N_ATTEMPT=$(( N_ATTEMPT + 1 ))
-	done
+    # Get the window id
+    ID_WINDOWS[${WINDOW_COUNTER}]=$(xwininfo -name ${WINDOW_NAME} | grep "Window id" | cut -d ' ' -f4)
 
-	# Get the window id
-	ID_WINDOWS[$WINDOW_COUNTER]=$(xwininfo -name $WINDOW_NAME | grep "Window id" | cut -d ' ' -f4)
+    write_window wait_load ${WINDOW_COUNTER}
 
-	write_window wait_load $WINDOW_COUNTER
-
-	# Increases the number of windows
-	WINDOW_COUNTER=$(($WINDOW_COUNTER+1))
+    # Increases the number of windows
+    WINDOW_COUNTER=$(( WINDOW_COUNTER + 1 ))
 }
 
-write_window() {
-	#### Description: Writes in a specific window on a particular display.
-	#### Parameters: $1 - message to be written; $2 - display to be used.
-	#### DISPLAY_XORGS and ID_WINDOWS are declared in "multiseat-controller".
+write_window () {
+    #### Description: Writes in a specific window on a particular display.
+    #### Parameters: $1 - message to be written; $2 - display to be used.
+    #### DISPLAY_XORGS and ID_WINDOWS are declared in "multiseat-controller".
 
-	export DISPLAY=${DISPLAY_XORGS[$2]}
-	case $1 in
-		ok)
-			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Terminal pronto para uso!" "Aguarde a configuração dos terminais restantes..." ;;
-		wait_load)
-			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Aguarde..." ;;
-		press_key)
-			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione a tecla F$2" "no teclado em frente a este monitor..." ;;
-		press_mouse)
-			$WRITE_MESSAGE ${ID_WINDOWS[$2]} "Pressione o botão esquerdo do mouse" "em frente a este monitor..." ;;
-	esac
+    export DISPLAY=${DISPLAY_XORGS[${2}]}
+    case ${1} in
+        ok)
+            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Terminal pronto para uso!" "Aguarde a configuração dos terminais restantes..." ;;
+        wait_load)
+            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Aguarde..." ;;
+        press_key)
+            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Pressione a tecla F${2}" "no teclado em frente a este monitor..." ;;
+        press_mouse)
+            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Pressione o botão esquerdo do mouse" "em frente a este monitor..." ;;
+    esac
 }

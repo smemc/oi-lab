@@ -28,12 +28,12 @@
 #set -x
 
 ## Path constants
-MC3SL_DEVICES="/usr/sbin/devices" # shortcut to devices that have already been paired
+MC3SL_DEVICES=/usr/sbin/devices # shortcut to devices that have already been paired
 
 ## Script/function in other file
-FIND_KEYBOARD="find_keyboard" # "find-devices"
-CREATE_WINDOW="create_window" # "window-access"
-WRITE_WINDOW="write_window" # "window-access"
+FIND_KEYBOARD=find_keyboard # "find-devices"
+CREATE_WINDOW=create_window # "window-access"
+WRITE_WINDOW=write_window # "window-access"
 
 ## Macros
 FAKE_DISPLAYS=( :90 :91 ) # display to access fake-seat (secondary card)
@@ -60,120 +60,60 @@ source /usr/share/oi-lab-multi-seat-config/find-devices
 source /usr/share/oi-lab-multi-seat-config/window-access
 
 create_onboard_window () {
-	# Checks if there is a device connected to the onboard card
-	if test "$(cat "/sys$(udevadm info /sys/class/drm/card0 | grep "P:" | cut -d " " -f2)/card0-VGA-1/status")" == "connected"; then
-		# Runs Xorg and creates the window for the onboard card
-		DISPLAY_XORGS[$WINDOW_COUNTER]=:$(($WINDOW_COUNTER+10))
-		export DISPLAY=${DISPLAY_XORGS[$WINDOW_COUNTER]}
+    # Checks if there is a device connected to the onboard card
+    if [[ "$(cat "/sys$(udevadm info /sys/class/drm/card0 | grep "P:" | cut -d " " -f2)/card0-VGA-1/status")" == "connected" ]]
+    then
+        # Runs Xorg and creates the window for the onboard card
+        DISPLAY_XORGS[${WINDOW_COUNTER}]=:$(( WINDOW_COUNTER + 10 ))
+        export DISPLAY=${DISPLAY_XORGS[${WINDOW_COUNTER}]}
 
-#		Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} -noreset &
-#		pid=$!
+        ${CREATE_WINDOW} primary
 
-		# Guarantees the Xorg execution
-#		xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-#		EXIT_CODE=$?
-#		N_ATTEMPT=0
-#		while test $EXIT_CODE -ne 0; do
-#			sleep 0.5
-#			xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-#			EXIT_CODE=$?
-#			if ! kill -0 "${pid}" >/dev/null 2>&1; then
-#				Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} &
-#				pid=$!
-#			fi
-#
-#			if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
-#				echo "[Error] Run Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} failed."
-#				exit 1
-#	    fi
-#
-#			N_ATTEMPT=$(($N_ATTEMPT+1))
-#		done
-
-		$CREATE_WINDOW primary
-
-		ONBOARD=1
-	else
-		WINDOW_ID_INIT=1
-		WINDOW_COUNTER=1
-	fi
+        ONBOARD=1
+    else
+        WINDOW_ID_INIT=1
+        WINDOW_COUNTER=1
+    fi
 }
 
 create_secondary_card_windows () {
-	#### $1: fake seat display
-	for i in ${OUTPUTS[@]}; do
-		# Display for each output
-		DISPLAY_XORGS[$WINDOW_COUNTER]=${FAKE_DISPLAYS[$1]}
-		export DISPLAY=${FAKE_DISPLAYS[$1]}
+    #### $1: fake seat display
+    for i in ${OUTPUTS[@]}
+    do
+        # Display for each output
+        DISPLAY_XORGS[${WINDOW_COUNTER}]=${FAKE_DISPLAYS[${1}]}
+        export DISPLAY=${FAKE_DISPLAYS[${1}]}
 
-		# Guarantees the Xorg-daemon execution
-#		xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-#		EXIT_CODE=$?
-#		N_ATTEMPT=0
-#		while test $EXIT_CODE -ne 0; do
-#			sleep 0.5
-#			xdpyinfo -display ${DISPLAY_XORGS[$WINDOW_COUNTER]}
-#			EXIT_CODE=$?
-#
-#			if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
-#				echo "[Error] Communication with Xorg ${DISPLAY_XORGS[$WINDOW_COUNTER]} failed."
-#				exit 1
-#			fi
-#
-#			N_ATTEMPT=$(( N_ATTEMPT + 1 ))
-#		done
-
-		# Run config window to type in this output
-		$CREATE_WINDOW $i
-	done
+        # Run config window to type in this output
+        ${CREATE_WINDOW} ${i}
+    done
 }
 
 configure_devices () {
-	COUNT=0
-	for WINDOW in `seq $WINDOW_ID_INIT $(($WINDOW_COUNTER-1))`; do
-		if test $WINDOW -eq 0; then
-			$WRITE_WINDOW ok $WINDOW
-		else
-			$FIND_KEYBOARD $WINDOW &
-			PID_FIND_DEVICES[$COUNT]=$!
-			COUNT=$(($COUNT+1))
+    COUNT=0
 
-			$WRITE_WINDOW press_key $WINDOW
-		fi
-	done
+    for WINDOW in $(seq ${WINDOW_ID_INIT} $(( WINDOW_COUNTER - 1 )))
+    do
+        if (( WINDOW == 0 ))
+        then
+            ${WRITE_WINDOW} ok ${WINDOW}
+        else
+            ${FIND_KEYBOARD} ${WINDOW} &
+            PID_FIND_DEVICES[$COUNT]=$!
+            COUNT=$(( COUNT + 1 ))
+
+            ${WRITE_WINDOW} press_key ${WINDOW}
+        fi
+    done
 }
 
 kill_jobs () {
-	if test -n "$(ls | grep lock)"; then
-		rm lock*
-	fi
-
-	if test -d "$MC3SL_DEVICES"; then
-		rm -rf $MC3SL_DEVICES/
-	fi
-
-	rm -rf $MC3SL_DEVICES
-
-	pkill -P $$
+    [[ -n $(ls | grep lock) ]] && rm lock*
+    [[ -d ${MC3SL_DEVICES} ]] && rm -rf "${MC3SL_DEVICES}"
+    pkill -P ${$}
 }
 
 ############ BEGIN ############
-
-#xdpyinfo -display $FAKE_DISPLAY
-#EXIT_CODE=$?
-#N_ATTEMPT=0
-#while test $EXIT_CODE -ne 0; do
-#	sleep 0.5
-#	xdpyinfo -display $FAKE_DISPLAY
-#	EXIT_CODE=$?
-#
-#	if test $N_ATTEMPT -gt $MAX_ATTEMPTS; then
-#		echo "[Error] xdpyinfo -display $FAKE_DISPLAY failed."
-#		exit 1
-#	fi
-#
-#	N_ATTEMPT=$(($N_ATTEMPT+1))
-#done
 
 udevadm trigger
 udevadm settle --timeout=10
@@ -189,38 +129,37 @@ N_KEYBOARDS_LISTED=${#KEYBOARDS[@]}
 
 # If there are less connected keyboards than available seat master devices,
 # leave remaining seat master devices unconfigured.
-if test $N_KEYBOARDS_LISTED -lt $N_SEATS_LISTED; then
-	N_CONFIGURABLE_SEATS=${N_KEYBOARDS_LISTED}
-fi
+(( N_KEYBOARDS_LISTED < N_SEATS_LISTED )) && N_CONFIGURABLE_SEATS=${N_KEYBOARDS_LISTED}
 
-if test $N_CONFIGURABLE_SEATS -gt 1; then
-	# If the onboard is connected, it creates a window to write on the screen
-	create_onboard_window
+if (( N_CONFIGURABLE_SEATS > 1 ))
+then
+    # If the onboard is connected, it creates a window to write on the screen
+    create_onboard_window
 
-	# Creates the necessary windows to write on the screen of each output of the secondary card
-	create_secondary_card_windows 0
+    # Creates the necessary windows to write on the screen of each output of the secondary card
+    create_secondary_card_windows 0
+    (( ${#SECONDARY_SEATS[@]} > 2 )) && create_secondary_card_windows 1
 
-	if test ${#SECONDARY_SEATS[@]} -gt 2; then
-		create_secondary_card_windows 1
-	fi
+    # We'll use it to save a shortcut to devices that have already been paired
+    mkdir -p ${MC3SL_DEVICES}
 
-	# We'll use it to save a shortcut to devices that have already been paired
-	mkdir -p $MC3SL_DEVICES
+    # Run configuration script for each seat
+    configure_devices
 
-	# Run configuration script for each seat
-	configure_devices
+    while (( CONFIGURED_SEATS < N_CONFIGURABLE_SEATS ))
+    do
+        wait -n ${PID_FIND_DEVICES[@]}
+        EXIT_CODE=${?}
 
-	while test $CONFIGURED_SEATS -lt $N_CONFIGURABLE_SEATS; do
-		wait -n ${PID_FIND_DEVICES[@]}
-		EXIT_CODE=$?
-
-		if test $EXIT_CODE -eq 0; then
-			CONFIGURED_SEATS=$(( CONFIGURED_SEATS + 1 ))
-		elif test $EXIT_CODE -eq 2; then
-			echo "[Error] Can not configure output: find-devices failed."
-			exit 1
-		fi
-	done
+        if (( EXIT_CODE == 0 ))
+        then
+            CONFIGURED_SEATS=$(( CONFIGURED_SEATS + 1 ))
+        elif (( EXIT_CODE == 2 ))
+        then
+            echo "[Error] Can not configure output: find-devices failed."
+            exit 1
+        fi
+    done
 fi
 
 # Cleans the system by killing all the processes and files it has created

@@ -24,85 +24,88 @@
 #### Written by: Stephanie Briere Americo - sba16@c3sl.ufpr.br on 2017.
 
 ## Macros
-DEVICES="/usr/sbin/devices" # shortcut to devices that have already been paired
+DEVICES=/usr/sbin/devices # shortcut to devices that have already been paired
 
 ## Script/function in other file
-READ_DEVICES="/usr/sbin/oi-lab-multi-seat-config-read-devices"
-DETECT_KEYBOARDS="/usr/sbin/oi-lab-multi-seat-config-detect-keyboard"
-WRITE_W="write_window" # "window-access"
+READ_DEVICES=/usr/sbin/oi-lab-multi-seat-config-read-devices
+DETECT_KEYBOARDS=/usr/sbin/oi-lab-multi-seat-config-detect-keyboard
+WRITE_W=write_window # "window-access"
 
 ## Variables
 declare -a SEATS_LISTED # save the name of the existing seats
 
 find_keyboard () {
-	fKey=$1 # key that this script should expect to be pressed
-	wNum=$fKey # position in the window control vector
+    fKey=$1 # key that this script should expect to be pressed
+    wNum=$fKey # position in the window control vector
 
-	CREATED=0
-	while test $CREATED -eq 0; do
-		KEYBOARDS=$($DETECT_KEYBOARDS)
+    CREATED=0
+    while (( CREATED == 0 ))
+    do
+        KEYBOARDS=$(${DETECT_KEYBOARDS})
 
-		# List all attached keyboards
-		for i in `ls $DEVICES | grep "\<keyboard"`; do
-			KEYBOARDS=$(sed "s#$i##g" <<< $KEYBOARDS)
-		done
+        # List all attached keyboards
+        for i in $(ls ${DEVICES} | grep "\<keyboard")
+        do
+            KEYBOARDS=$(sed "s#$i##g" <<< ${KEYBOARDS})
+        done
 
-		# If no free (not attached) keyboard is available, you can not proceed
-		if test -z "$KEYBOARDS"; then
-		    echo "[Error] No free keyboards available"
-		    exit 1
-		fi
+        # If no free (not attached) keyboard is available, you can not proceed
+        if [[ -z ${KEYBOARDS} ]]
+        then
+            echo "[Error] No free keyboards available"
+            exit 1
+        fi
 
-		# See if someone presses the expected key
-		PRESSED=$($READ_DEVICES $fKey $KEYBOARDS | grep '^detect' | cut -d'|' -f2)
+        # See if someone presses the expected key
+        PRESSED=$(${READ_DEVICES} ${fKey} ${KEYBOARDS} | grep '^detect' | cut -d'|' -f2)
 
-		# If $READ_DEVICES gets killed the script won't do bad stuff
-		if test -z "$PRESSED"; then
-		    continue
-		fi
+        # If $READ_DEVICES gets killed the script won't do bad stuff
+        [[ -z ${PRESSED} ]] && continue
 
-		# If the key has not yet been processed, continue to wait
-		if test "$PRESSED" = 'timeout'; then
-		    continue
-		fi
+        # If the key has not yet been processed, continue to wait
+        [[ ${PRESSED} == timeout ]] && continue
 
-		# If you got here, then the key was pressed
-		CREATED=1
+        # If you got here, then the key was pressed
+        CREATED=1
 
-		# Creates a link to the keyboard so no one else can use it
-		ln -sf $PRESSED $DEVICES/keyboard_$fKey
+        # Creates a link to the keyboard so no one else can use it
+        ln -sf ${PRESSED} ${DEVICES}/keyboard_${fKey}
 
-		# Check if there's no longer a link to this keyboard
-		for i in `ls $DEVICES | grep "\<keyboard"`; do
-		    if test "$i" != "keyboard_$fKey"; then
-			AUX=$(stat -c %N $DEVICES/$i | cut -d '>' -f2 | cut -d "'" -f2)
+        # Check if there's no longer a link to this keyboard
+        for i in $(ls ${DEVICES} | grep "\<keyboard")
+        do
+            if [[ ${i} != "keyboard_${fKey}" ]]
+            then
+                AUX=$(stat -c %N ${DEVICES}/${i} | cut -d '>' -f2 | cut -d "'" -f2)
 
-			if test "$AUX" = "$PRESSED"; then
-			    # Keyboard link already exists, try again
-			    rm -f $DEVICES/keyboard_$fKey
-			    CREATED=0
-			fi
-		    fi
-		done
-	done
+                if [[ ${AUX} == ${PRESSED} ]]
+                then
+                    # Keyboard link already exists, try again
+                    rm -f ${DEVICES}/keyboard_${fKey}
+                    CREATED=0
+                fi
+            fi
+        done
+    done
 
-	# Find device address
-	SYS_DEV=/sys$(udevadm info $PRESSED | grep 'P:' | cut -d ' ' -f2- | sed -r 's/event.*$//g')
+    # Find device address
+    SYS_DEV=/sys$(udevadm info ${PRESSED} | grep 'P:' | cut -d ' ' -f2- | sed -r 's/event.*$//g')
 
-	if test -n "$SYS_DEV"; then
-		# Get parent USB hub syspath
-		PARENT_SYSPATH=$(echo $SYS_DEV | cut -d/ -f1-7)
+    if [[ -n ${SYS_DEV} ]]
+    then
+        # Get parent USB hub syspath
+        PARENT_SYSPATH=$(echo ${SYS_DEV} | cut -d/ -f1-7)
 
-		$WRITE_W ok $wNum
+        ${WRITE_W} ok ${wNum}
 
-		# Attach devices to a new seat
-		loginctl attach ${SEAT_NAMES[$((fKey-1))]} ${SECONDARY_SEATS[$((fKey-1))]} $PARENT_SYSPATH
-		udevadm control --reload-rules
-		udevadm trigger
+        # Attach devices to a new seat
+        loginctl attach ${SEAT_NAMES[$(( fKey - 1 ))]} ${SECONDARY_SEATS[$(( fKey - 1 ))]} ${PARENT_SYSPATH}
+        udevadm control --reload-rules
+        udevadm trigger
 
-		exit 0
-	else
-		echo "[Error] Can not find keyboard!"
-		exit 2
-	fi
+        exit 0
+    else
+        echo "[Error] Can not find keyboard!"
+        exit 2
+    fi
 }
