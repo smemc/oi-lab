@@ -29,7 +29,7 @@ sudo apt install oi-lab-freeze-users oi-lab-proinfo-multi-seat-utils oi-lab-user
 ```
 3. **[UPDATE]** For new installations after November 17th, 2017, if you want to create users for desktop freezing, you must run manually the following command:
 ```
-sudo oi-lab-create-freeze-users
+sudo oi-lab-create-freeze-users [NUMBER-OF-USERS (default: 5)]
 ```
 
 [*] Package `oi-lab-proinfo-multi-seat-utils` may not work as expected in SDDM-based Ubuntu flavours (Kubuntu, KDE neon, Lubuntu-next), due to lack of multi-seat support in SDDM. In these cases, you must replace SDDM with LightDM.
