@@ -39,7 +39,7 @@ static char args_doc[] = "--name WINDOW_NAME [--output OUTPUT | --geometry WIDTH
 static char doc[] = "oi-lab-multi-seat-config-window -- a window helper for multi-seat dynamic input assignment";
 
 static struct argp_option options[] = {
-    {"output", 'o', "OUTPUT_NAME", 0, "Target video XRandR output"},
+    {"output", 'o', "OUTPUT_NAME", OPTION_ARG_OPTIONAL, "Target video XRandR output"},
     {"geometry", 'g', "WIDTHxHEIGHT+X+Y", 0, "Window geometry"},
     {"name", 'n', "WINDOW_NAME", 0, "Window name"},
     {0}};
