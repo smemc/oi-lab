@@ -28,7 +28,7 @@
 ## Script/function in other file
 NEW_WINDOW=oi-lab-multi-seat-config-window # it receives as parameter <RESOLUTION>x<X_Initial>+<Y_Inicial>
 WRITE_MESSAGE=oi-lab-multi-seat-config-message # it receives as parameter <ID_WINDOW> <Message>
-MAX_ATTEMPTS=100
+#MAX_ATTEMPTS=100
 
 create_window () {
     #### Description: Create a window in a specific display.
@@ -37,29 +37,29 @@ create_window () {
 
     # Creates a new window for writing on this output
     WINDOW_NAME=w$(( WINDOW_COUNTER + 1 ))
-    ${NEW_WINDOW} --output ${1} --name ${WINDOW_NAME} &
+    ID_WINDOWS[${WINDOW_COUNTER}]=$(${NEW_WINDOW} --output ${1} --name ${WINDOW_NAME} &)
 
     # Try to access the window
-    xwininfo -name ${WINDOW_NAME}
-    EXIT_CODE=${?}
-    N_ATTEMPT=0
-    while (( EXIT_CODE != 0 ))
-    do
-        sleep 0.5
-        xwininfo -name ${WINDOW_NAME}
-        EXIT_CODE=${?}
+    #xwininfo -name ${WINDOW_NAME}
+    #EXIT_CODE=${?}
+    #N_ATTEMPT=0
+    #while (( EXIT_CODE != 0 ))
+    #do
+    #    sleep 0.5
+    #    xwininfo -name ${WINDOW_NAME}
+    #    EXIT_CODE=${?}
 
-        if (( N_ATTEMPT > MAX_ATTEMPTS ))
-        then
-            echo "[Error] Failed to create window ${WINDOW_NAME}."
-            exit 1
-        fi
+    #    if (( N_ATTEMPT > MAX_ATTEMPTS ))
+    #    then
+    #        echo "[Error] Failed to create window ${WINDOW_NAME}."
+    #        exit 1
+    #    fi
 
-        N_ATTEMPT=$(( N_ATTEMPT + 1 ))
-    done
+    #    N_ATTEMPT=$(( N_ATTEMPT + 1 ))
+    #done
 
     # Get the window id
-    ID_WINDOWS[${WINDOW_COUNTER}]=$(xwininfo -name ${WINDOW_NAME} | grep "Window id" | cut -d ' ' -f4)
+    #ID_WINDOWS[${WINDOW_COUNTER}]=$(xwininfo -name ${WINDOW_NAME} | grep "Window id" | cut -d ' ' -f4)
 
     write_window wait_load ${WINDOW_COUNTER}
 
