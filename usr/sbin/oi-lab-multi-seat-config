@@ -67,7 +67,7 @@ create_onboard_window () {
         DISPLAY_XORGS[${WINDOW_COUNTER}]=:$(( WINDOW_COUNTER + 10 ))
         export DISPLAY=${DISPLAY_XORGS[${WINDOW_COUNTER}]}
 
-        ${CREATE_WINDOW} primary
+        ${CREATE_WINDOW}
 
         ONBOARD=1
     else

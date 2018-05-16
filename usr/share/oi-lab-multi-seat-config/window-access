@@ -30,10 +30,6 @@ NEW_WINDOW=oi-lab-multi-seat-config-window # it receives as parameter <RESOLUTIO
 WRITE_MESSAGE=oi-lab-multi-seat-config-message # it receives as parameter <ID_WINDOW> <Message>
 MAX_ATTEMPTS=100
 
-get_output_geometry () {
-    xrandr -display ${DISPLAY_XORGS[$WINDOW_COUNTER]} | grep ${1} | grep -Po '\d+x\d+\+\d+\+\d+'
-}
-
 create_window () {
     #### Description: Create a window in a specific display.
     #### ID_WINDOWS and WINDOW_COUNTER are declared in "multiseat-controller".
@@ -41,8 +37,7 @@ create_window () {
 
     # Creates a new window for writing on this output
     WINDOW_NAME=w$(( WINDOW_COUNTER + 1 ))
-    WINDOW_GEOMETRY=$(get_output_geometry ${1})
-    ${NEW_WINDOW} ${WINDOW_GEOMETRY} ${WINDOW_NAME} &
+    ${NEW_WINDOW} --output ${1} --name ${WINDOW_NAME} &
 
     # Try to access the window
     xwininfo -name ${WINDOW_NAME}
