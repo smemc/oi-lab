@@ -75,7 +75,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
     break;
 
   case ARGP_KEY_END:
-    if (state->arg_num < 3)
+    if (state->arg_num < 1)
       argp_usage(state); /* Not enough arguments. */
 
     break;
@@ -351,6 +351,8 @@ void create_window(xcb_connection_t *connection,
   xcb_map_window(connection, window);
 
   place_window(connection, window, x, y);
+
+  printf("%x", window);
 }
 
 int main(int argc, char *argv[])
