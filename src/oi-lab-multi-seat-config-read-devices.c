@@ -55,155 +55,161 @@ void read_node(unsigned char *buffer, int sock, int how_many);
 
 int main(int argc, char *argv[])
 {
-
-    fd_set rfds;
-    struct input_event ev;
-    int retval, i;
-    int biggest_so_far = 0;
-    int fd_array[30];
-    int expected_key;
-    struct timeval tv;
+  fd_set rfds;
+  struct input_event ev;
+  int retval, i;
+  int biggest_so_far = 0;
+  int fd_array[30];
+  int expected_key;
+  struct timeval tv;
 
 #ifdef DEBUG
-    for (i = 0; i < argc; i++)
-        fprintf(stderr, "argv[%d] = %s\n", i, argv[i]);
+  for (i = 0; i < argc; i++)
+    fprintf(stderr, "argv[%d] = %s\n", i, argv[i]);
 #endif
 
-    /* Basic checking */
-    if (argc > 31)
-    {
-        fprintf(stderr, "read_devices: maximum is 30 arguments\n");
-        fprintf(stderr, "usage: %s key files...\n", argv[0]);
-        exit(1);
-    }
-    if (argc <= 2)
-    {
-        fprintf(stderr, "read_devices: few arguments\n");
-        fprintf(stderr, "usage: %s key files...\n", argv[0]);
-        exit(1);
-    }
+  /* Basic checking */
+  if (argc > 31)
+  {
+    fprintf(stderr, "read_devices: maximum is 30 arguments\n");
+    fprintf(stderr, "usage: %s key files...\n", argv[0]);
+    exit(1);
+  }
 
-    expected_key = atoi(argv[1]);
-    /* Timeout is different for ESC/ENTER */
-    if (expected_key != 14)
-        tv.tv_sec = 20;
-    else
-        tv.tv_sec = 5;
+  if (argc <= 2)
+  {
+    fprintf(stderr, "read_devices: few arguments\n");
+    fprintf(stderr, "usage: %s key files...\n", argv[0]);
+    exit(1);
+  }
 
-    tv.tv_usec = 0;
+  expected_key = atoi(argv[1]);
+  /* Timeout is different for ESC/ENTER */
+  if (expected_key != 14)
+    tv.tv_sec = 20;
+  else
+    tv.tv_sec = 5;
 
-    /* Open the file and store at biggest_so_far the biggest FD between the
+  tv.tv_usec = 0;
+
+  /* Open the file and store at biggest_so_far the biggest FD between the
      * files */
+  for (i = 2; i < argc; i++)
+  {
+    fd_array[i] = open(argv[i], O_RDONLY);
+
+    if (fd_array[i] == -1)
+    {
+      perror("select (ERROR)");
+      exit(1);
+    }
+
+    if (fd_array[i] > biggest_so_far)
+      biggest_so_far = fd_array[i];
+  }
+  while (1)
+  {
+    /* Zero the FD set */
+    FD_ZERO(&rfds);
+
+    /* Insert each FD in the set */
     for (i = 2; i < argc; i++)
+      FD_SET(fd_array[i], &rfds);
+
+    retval = select(biggest_so_far + 1, &rfds, 0, 0, &tv); /* no timeout */
+
+    /* Verify which FDs are still in the set: which ones have data to be read */
+    if (retval == -1)
     {
-        fd_array[i] = open(argv[i], O_RDONLY);
-        if (fd_array[i] == -1)
-        {
-            perror("select (ERROR)");
-            exit(1);
-        }
-        if (fd_array[i] > biggest_so_far)
-            biggest_so_far = fd_array[i];
+      perror("select (ERROR)");
+      exit(1);
     }
-    while (1)
+    else if (retval)
     {
-        /* Zero the FD set */
-        FD_ZERO(&rfds);
-
-        /* Insert each FD in the set */
-        for (i = 2; i < argc; i++)
-            FD_SET(fd_array[i], &rfds);
-
-        retval = select(biggest_so_far + 1, &rfds, 0, 0, &tv); /* no timeout */
-
-        /* Verify which FDs are still in the set: which ones have data to be
-	 * read */
-        if (retval == -1)
+      for (i = 2; i < argc; i++)
+      {
+        if (FD_ISSET(fd_array[i], &rfds))
         {
-            perror("select (ERROR)");
+          /* Read from FD */
+          read_node((unsigned char *)&ev, fd_array[i],
+                    sizeof(struct input_event));
+
+          /* f1..f10 */
+          if (ev.type == EV_KEY && ev.value == EV_PRESS &&
+              ((ev.code - (KEY_F1) + 1) == expected_key))
+          {
+            printf("detect=|%s\n", argv[i]);
             exit(1);
-        }
-        else if (retval)
-        {
-            for (i = 2; i < argc; i++)
-            {
-                if (FD_ISSET(fd_array[i], &rfds))
-                {
-                    /* Read from FD */
-                    read_node((unsigned char *)&ev, fd_array[i],
-                              sizeof(struct input_event));
+          }
 
-                    /* f1..f10 */
-                    if (ev.type == EV_KEY && ev.value == EV_PRESS &&
-                        ((ev.code - (KEY_F1) + 1) == expected_key))
-                    {
-                        printf("detect=|%s\n", argv[i]);
-                        exit(1);
-                    }
-                    /* f11 or f12 */
-                    if (ev.type == EV_KEY && ev.value == EV_PRESS &&
-                        ((ev.code == KEY_F11 && expected_key == 11) ||
-                         (ev.code == KEY_F12 && expected_key == 12)))
-                    {
-                        printf("detect=|%s\n", argv[i]);
-                        exit(1);
-                    }
-                    /* left button */
-                    if (ev.type == EV_KEY && ev.value == EV_PRESS &&
-                        ev.code == BTN_LEFT && expected_key == 13)
-                    {
-                        printf("detect=|%s\n", argv[i]);
-                        exit(1);
-                    }
-                    /* enter */
-                    if (ev.type == EV_KEY && ev.value == EV_PRESS &&
-                        (ev.code == KEY_ENTER || ev.code == KEY_KPENTER) &&
-                        expected_key == 14)
-                    {
-                        printf("detect=|enter\n");
-                        exit(1);
-                    }
-                    /* esc */
-                    if (ev.type == EV_KEY && ev.value == EV_PRESS &&
-                        ev.code == KEY_ESC && expected_key == 14)
-                    {
-                        printf("detect=|esc\n");
-                        exit(1);
-                    }
-                }
-            }
-        }
-        else
-        {
-            printf("detect=|timeout\n");
+          /* f11 or f12 */
+          if (ev.type == EV_KEY && ev.value == EV_PRESS &&
+              ((ev.code == KEY_F11 && expected_key == 11) ||
+               (ev.code == KEY_F12 && expected_key == 12)))
+          {
+            printf("detect=|%s\n", argv[i]);
             exit(1);
+          }
+
+          /* left button */
+          if (ev.type == EV_KEY && ev.value == EV_PRESS &&
+              ev.code == BTN_LEFT && expected_key == 13)
+          {
+            printf("detect=|%s\n", argv[i]);
+            exit(1);
+          }
+
+          /* enter */
+          if (ev.type == EV_KEY && ev.value == EV_PRESS &&
+              (ev.code == KEY_ENTER || ev.code == KEY_KPENTER) &&
+              expected_key == 14)
+          {
+            printf("detect=|enter\n");
+            exit(1);
+          }
+
+          /* esc */
+          if (ev.type == EV_KEY && ev.value == EV_PRESS &&
+              ev.code == KEY_ESC && expected_key == 14)
+          {
+            printf("detect=|esc\n");
+            exit(1);
+          }
         }
+      }
     }
-    return 0;
+    else
+    {
+      printf("detect=|timeout\n");
+      exit(1);
+    }
+  }
+  return 0;
 }
 
 void read_node(unsigned char *buffer, int sock, int how_many)
 {
-    /* Keep calling recv until everything is received */
-    int pointer = 0;
-    int maximum = how_many;
-    int bytes_read;
+  /* Keep calling recv until everything is received */
+  int pointer = 0;
+  int maximum = how_many;
+  int bytes_read;
 
-    while (pointer < how_many)
+  while (pointer < how_many)
+  {
+    bytes_read = read(sock, (void *)(buffer + pointer), maximum);
+
+    if (bytes_read == -1)
     {
-        bytes_read = read(sock, (void *)(buffer + pointer), maximum);
-        if (bytes_read == -1)
-        {
-            perror("Error reading the socket.");
-            exit(1);
-        }
-        else if (bytes_read == 0)
-        {
-            fprintf(stderr, "End of file.\n");
-            exit(1);
-        }
-
-        pointer += bytes_read; /* Forward pointer */
-        maximum -= bytes_read;
+      perror("Error reading the socket.");
+      exit(1);
     }
+    else if (bytes_read == 0)
+    {
+      fprintf(stderr, "End of file.\n");
+      exit(1);
+    }
+
+    pointer += bytes_read; /* Forward pointer */
+    maximum -= bytes_read;
+  }
 }

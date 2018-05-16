@@ -14,7 +14,7 @@ $(DEST)/oi-lab-multi-seat-config-message: $(ORIG)/oi-lab-multi-seat-config-messa
 	$(CC) $(CFLAGS) $< -o $@ `pkg-config --libs --cflags cairo xcb-aux`
 
 $(DEST)/oi-lab-multi-seat-config-window: $(ORIG)/oi-lab-multi-seat-config-window.c
-	$(CC) $(CFLAGS) $< -o $@ `pkg-config --libs --cflags xcb-aux`
+	$(CC) $(CFLAGS) $< -o $@ `pkg-config --libs --cflags xcb-aux xcb-randr`
 
 clean:
 	rm -f usr/sbin/oi-lab-multi-seat-config-read-devices usr/sbin/oi-lab-multi-seat-config-message usr/sbin/oi-lab-multi-seat-config-window
