@@ -146,7 +146,7 @@ then
     # Run configuration script for each seat
     configure_devices
 
-    while (( CONFIGURED_SEATS < N_CONFIGURABLE_SEATS ))
+    while (( CONFIGURED_SEATS <= N_CONFIGURABLE_SEATS ))
     do
         wait -n ${PID_FIND_DEVICES[@]}
         EXIT_CODE=${?}
