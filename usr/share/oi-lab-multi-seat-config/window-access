@@ -39,6 +39,12 @@ create_window () {
     WINDOW_NAME=w$(( WINDOW_COUNTER + 1 ))
     ID_WINDOWS[${WINDOW_COUNTER}]=$(${NEW_WINDOW} --output ${1} --name ${WINDOW_NAME} &)
 
+    if [[ -z ${ID_WINDOWS[${WINDOW_COUNTER}]} ]]
+    then
+        echo "[Error] Failed to create window ${WINDOW_NAME}."
+        exit 1
+    fi
+
     # Try to access the window
     #xwininfo -name ${WINDOW_NAME}
     #EXIT_CODE=${?}
