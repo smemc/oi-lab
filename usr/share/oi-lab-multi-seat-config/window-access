@@ -37,13 +37,23 @@ create_window () {
 
     # Creates a new window for writing on this output
     WINDOW_NAME=w$(( WINDOW_COUNTER + 1 ))
-    ID_WINDOWS[${WINDOW_COUNTER}]=$(${NEW_WINDOW} --output ${1} --name ${WINDOW_NAME} &)
+    TMPFILE=$(mktemp /tmp/${WINDOW_NAME}.XXXXXX.txt)
+    ${NEW_WINDOW} --output ${1} --name ${WINDOW_NAME} > ${TMPFILE} &
+    ID_WINDOWS[${WINDOW_COUNTER}]=$(cat ${TMPFILE})
 
     if [[ -z ${ID_WINDOWS[${WINDOW_COUNTER}]} ]]
     then
-        echo "[Error] Failed to create window ${WINDOW_NAME}."
-        exit 1
+        sleep 1
+        ID_WINDOWS[${WINDOW_COUNTER}]=$(cat ${TMPFILE})
+        
+        if [[ -z ${ID_WINDOWS[${WINDOW_COUNTER}]} ]]
+            echo "[Error] Failed to create window ${WINDOW_NAME}."
+            rm ${TMPFILE}
+            exit 1
+        fi
     fi
+    
+    rm ${TMPFILE}
 
     # Try to access the window
     #xwininfo -name ${WINDOW_NAME}
