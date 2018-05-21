@@ -47,6 +47,7 @@ create_window () {
         ID_WINDOWS[${WINDOW_COUNTER}]=$(cat ${TMPFILE})
         
         if [[ -z ${ID_WINDOWS[${WINDOW_COUNTER}]} ]]
+        then
             echo "[Error] Failed to create window ${WINDOW_NAME}."
             rm ${TMPFILE}
             exit 1
