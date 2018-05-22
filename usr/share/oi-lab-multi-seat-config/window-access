@@ -37,47 +37,27 @@ create_window () {
 
     # Creates a new window for writing on this output
     WINDOW_NAME=w$(( WINDOW_COUNTER + 1 ))
-    TMPFILE=$(mktemp /tmp/${WINDOW_NAME}.XXXXXX.txt)
     [[ -n ${1} ]] && OUTPUT_OPTION="--output ${1}"
-    ${NEW_WINDOW} ${OUTPUT_OPTION} --name ${WINDOW_NAME} > ${TMPFILE} &
-    ID_WINDOWS[${WINDOW_COUNTER}]=$(cat ${TMPFILE})
-
-    if [[ -z ${ID_WINDOWS[${WINDOW_COUNTER}]} ]]
-    then
-        sleep 1
-        ID_WINDOWS[${WINDOW_COUNTER}]=$(cat ${TMPFILE})
-        
-        if [[ -z ${ID_WINDOWS[${WINDOW_COUNTER}]} ]]
-        then
-            echo "[Error] Failed to create window ${WINDOW_NAME}."
-            rm ${TMPFILE}
-            exit 1
-        fi
-    fi
-    
-    rm ${TMPFILE}
+    ${NEW_WINDOW} ${OUTPUT_OPTION} --name ${WINDOW_NAME} &
 
     # Try to access the window
-    #xwininfo -name ${WINDOW_NAME}
-    #EXIT_CODE=${?}
-    #N_ATTEMPT=0
-    #while (( EXIT_CODE != 0 ))
-    #do
-    #    sleep 0.5
-    #    xwininfo -name ${WINDOW_NAME}
-    #    EXIT_CODE=${?}
+    ID_WINDOWS[${WINDOW_COUNTER}]=$(xwininfo -name ${WINDOW_NAME} | grep "Window id" | cut -d ' ' -f4)
+    EXIT_CODE=${?}
+    N_ATTEMPT=0
+    while (( EXIT_CODE != 0 ))
+    do
+        sleep 0.5
+        ID_WINDOWS[${WINDOW_COUNTER}]=$(xwininfo -name ${WINDOW_NAME} | grep "Window id" | cut -d ' ' -f4)
+        EXIT_CODE=${?}
 
-    #    if (( N_ATTEMPT > MAX_ATTEMPTS ))
-    #    then
-    #        echo "[Error] Failed to create window ${WINDOW_NAME}."
-    #        exit 1
-    #    fi
+        if (( N_ATTEMPT > MAX_ATTEMPTS ))
+        then
+            echo "[Error] Failed to create window ${WINDOW_NAME}."
+            exit 1
+        fi
 
-    #    N_ATTEMPT=$(( N_ATTEMPT + 1 ))
-    #done
-
-    # Get the window id
-    #ID_WINDOWS[${WINDOW_COUNTER}]=$(xwininfo -name ${WINDOW_NAME} | grep "Window id" | cut -d ' ' -f4)
+        N_ATTEMPT=$(( N_ATTEMPT + 1 ))
+    done
 
     write_window wait_load ${WINDOW_COUNTER}
 
