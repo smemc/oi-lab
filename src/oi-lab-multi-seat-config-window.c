@@ -66,20 +66,9 @@ parse_opt(int key, char *arg, struct argp_state *state)
   case 'n':
     arguments->window_name = arg;
     break;
-
   case ARGP_KEY_ARG:
-    if (state->arg_num >= 3)
-      argp_usage(state); /* Too many arguments. */
-
-    arguments->args[state->arg_num] = arg;
-    break;
-
   case ARGP_KEY_END:
-    if (state->arg_num < 1)
-      argp_usage(state); /* Not enough arguments. */
-
     break;
-
   default:
     return ARGP_ERR_UNKNOWN;
   }
@@ -351,8 +340,6 @@ void create_window(xcb_connection_t *connection,
   xcb_map_window(connection, window);
 
   place_window(connection, window, x, y);
-
-  printf("%x", window);
 }
 
 int main(int argc, char *argv[])
