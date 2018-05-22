@@ -39,7 +39,7 @@ static char args_doc[] = "--name WINDOW_NAME [--output OUTPUT | --geometry WIDTH
 static char doc[] = "oi-lab-multi-seat-config-window -- a window helper for multi-seat dynamic input assignment";
 
 static struct argp_option options[] = {
-    {"output", 'o', "OUTPUT_NAME", OPTION_ARG_OPTIONAL, "Target video XRandR output"},
+    {"output", 'o', "OUTPUT_NAME", 0, "Target video XRandR output"},
     {"geometry", 'g', "WIDTHxHEIGHT+X+Y", 0, "Window geometry"},
     {"name", 'n', "WINDOW_NAME", 0, "Window name"},
     {0}};
@@ -352,12 +352,12 @@ int main(int argc, char *argv[])
   xcb_screen_t *screen;
 
   struct arguments arguments;
-  arguments.output = NULL;
-  arguments.geometry = NULL;
-  arguments.window_name = NULL;
+  arguments.output = "";
+  arguments.geometry = "";
+  arguments.window_name = "";
   argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
-  if (!arguments.window_name)
+  if (arguments.window_name == "")
   {
     fprintf(stderr, "Missing mandatory option --window WINDOW_NAME.\n");
     exit(1);
@@ -373,10 +373,10 @@ int main(int argc, char *argv[])
 
   screen = xcb_aux_get_screen(connection, screen_number);
 
-  if (arguments.output != NULL)
+  if (arguments.output != "")
     get_output_geometry(connection, screen_number, arguments.output,
                         &x, &y, &width, &height);
-  else if (arguments.geometry != NULL)
+  else if (arguments.geometry != "")
     sscanf(arguments.geometry,
            "%dx%d+%d+%d",
            &width, &height, &x, &y);
