@@ -28,7 +28,7 @@
 ## Script/function in other file
 NEW_WINDOW=oi-lab-multi-seat-config-window # it receives as parameter <RESOLUTION>x<X_Initial>+<Y_Inicial>
 WRITE_MESSAGE=oi-lab-multi-seat-config-message # it receives as parameter <ID_WINDOW> <Message>
-#MAX_ATTEMPTS=100
+MAX_ATTEMPTS=100
 
 create_window () {
     #### Description: Create a window in a specific display.
@@ -38,24 +38,22 @@ create_window () {
     # Creates a new window for writing on this output
     WINDOW_NAME=w$(( WINDOW_COUNTER + 1 ))
     [[ -n ${1} ]] && OUTPUT_OPTION="--output ${1}"
+    export DISPLAY=${DISPLAY_XORGS[${WINDOW_COUNTER}]}
     ${NEW_WINDOW} ${OUTPUT_OPTION} --name ${WINDOW_NAME} &
 
     # Try to access the window
-    ID_WINDOWS[${WINDOW_COUNTER}]=$(xwininfo -name ${WINDOW_NAME} | grep "Window id" | cut -d ' ' -f4)
-    EXIT_CODE=${?}
+    ID_WINDOWS[${WINDOW_COUNTER}]=$(xwininfo -root -children | grep ${WINDOW_NAME} | awk '{ print $1 }')
     N_ATTEMPT=0
-    while (( EXIT_CODE != 0 ))
+    while [[ -z ${ID_WINDOWS[${WINDOW_COUNTER}]} ]]
     do
-        sleep 0.5
-        ID_WINDOWS[${WINDOW_COUNTER}]=$(xwininfo -name ${WINDOW_NAME} | grep "Window id" | cut -d ' ' -f4)
-        EXIT_CODE=${?}
-
-        if (( N_ATTEMPT > MAX_ATTEMPTS ))
+        if (( N_ATTEMPT >= MAX_ATTEMPTS ))
         then
             echo "[Error] Failed to create window ${WINDOW_NAME}."
             exit 1
         fi
 
+        sleep 0.5
+        ID_WINDOWS[${WINDOW_COUNTER}]=$(xwininfo -root -children | grep ${WINDOW_NAME} | awk '{ print $1 }')
         N_ATTEMPT=$(( N_ATTEMPT + 1 ))
     done
 
@@ -73,12 +71,16 @@ write_window () {
     export DISPLAY=${DISPLAY_XORGS[${2}]}
     case ${1} in
         ok)
-            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Terminal pronto para uso!" "Aguarde a configuração dos terminais restantes..." ;;
+            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Terminal pronto para uso!" "Aguarde a configuração dos terminais restantes..."
+            ;;
         wait_load)
-            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Aguarde..." ;;
+            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Aguarde..."
+            ;;
         press_key)
-            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Pressione a tecla F${2}" "no teclado em frente a este monitor..." ;;
+            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Pressione a tecla F${2}" "no teclado em frente a este monitor..."
+            ;;
         press_mouse)
-            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Pressione o botão esquerdo do mouse" "em frente a este monitor..." ;;
+            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Pressione o botão esquerdo do mouse" "em frente a este monitor..."
+            ;;
     esac
 }

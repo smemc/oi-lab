@@ -65,8 +65,6 @@ create_onboard_window () {
     then
         # Runs Xorg and creates the window for the onboard card
         DISPLAY_XORGS[${WINDOW_COUNTER}]=:$(( WINDOW_COUNTER + 10 ))
-        export DISPLAY=${DISPLAY_XORGS[${WINDOW_COUNTER}]}
-
         ${CREATE_WINDOW}
 
         ONBOARD=1
@@ -82,9 +80,6 @@ create_secondary_card_windows () {
     do
         # Display for each output
         DISPLAY_XORGS[${WINDOW_COUNTER}]=${FAKE_DISPLAYS[${1}]}
-        export DISPLAY=${FAKE_DISPLAYS[${1}]}
-
-        # Run config window to type in this output
         ${CREATE_WINDOW} ${i}
     done
 }
