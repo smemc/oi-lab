@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "randr.h": "c"
+        "randr.h": "c",
+        "argp.h": "c"
     }
 }
