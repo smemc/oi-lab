@@ -60,14 +60,11 @@ source /usr/share/oi-lab-multi-seat-config/find-devices
 source /usr/share/oi-lab-multi-seat-config/window-access
 
 create_onboard_window () {
-    # Checks if there is a device connected to the onboard card
-    if [[ "$(cat "/sys$(udevadm info /sys/class/drm/card0 | grep "P:" | cut -d " " -f2)/card0-VGA-1/status")" == "connected" ]]
+    if (( ONBOARD == 1 ))
     then
         # Runs Xorg and creates the window for the onboard card
         DISPLAY_XORGS[${WINDOW_COUNTER}]=:$(( WINDOW_COUNTER + 10 ))
         ${CREATE_WINDOW}
-
-        ONBOARD=1
     else
         WINDOW_ID_INIT=1
         WINDOW_COUNTER=1
@@ -113,6 +110,9 @@ kill_jobs () {
 udevadm trigger
 udevadm settle --timeout=10
 
+# Checks if there is a device connected to the onboard card
+[[ "$(cat "/sys$(udevadm info /sys/class/drm/card0 | grep "P:" | cut -d " " -f2)/card0-VGA-1/status")" == "connected" ]] && ONBOARD=1
+
 # Wait until all seats are configured
 N_SEATS_LISTED=$(( ${#SECONDARY_SEATS[@]} + ONBOARD ))
 N_CONFIGURABLE_SEATS=${N_SEATS_LISTED}
@@ -141,7 +141,7 @@ then
     # Run configuration script for each seat
     configure_devices
 
-    while (( CONFIGURED_SEATS <= N_CONFIGURABLE_SEATS ))
+    while (( CONFIGURED_SEATS < N_CONFIGURABLE_SEATS ))
     do
         wait -n ${PID_FIND_DEVICES[@]}
         EXIT_CODE=${?}
