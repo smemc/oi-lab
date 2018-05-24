@@ -73,6 +73,9 @@ write_window () {
         ok)
             ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Terminal pronto para uso!" "Aguarde a configuração dos terminais restantes..."
             ;;
+        error)
+            ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Erro na configuração deste terminal!"
+            ;;
         wait_load)
             ${WRITE_MESSAGE} ${ID_WINDOWS[${2}]} "Aguarde..."
             ;;

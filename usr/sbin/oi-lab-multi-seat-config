@@ -145,15 +145,9 @@ then
     do
         wait -n ${PID_FIND_DEVICES[@]}
         EXIT_CODE=${?}
+        CONFIGURED_SEATS=$(( CONFIGURED_SEATS + 1 ))
 
-        if (( EXIT_CODE == 0 ))
-        then
-            CONFIGURED_SEATS=$(( CONFIGURED_SEATS + 1 ))
-        elif (( EXIT_CODE == 2 ))
-        then
-            echo "[Error] Can not configure output: find-devices failed."
-            exit 1
-        fi
+        (( EXIT_CODE == 2 )) && echo "[Error] Can not configure output: find-devices failed."
     done
 fi
 

@@ -96,12 +96,18 @@ find_keyboard () {
         # Get parent USB hub syspath
         PARENT_SYSPATH=$(echo ${SYS_DEV} | cut -d/ -f1-7)
 
-        ${WRITE_W} ok ${wNum}
-
         # Attach devices to a new seat
         loginctl attach ${SEAT_NAMES[$(( fKey - 1 ))]} ${SECONDARY_SEATS[$(( fKey - 1 ))]} ${PARENT_SYSPATH}
-        udevadm control --reload-rules
-        udevadm trigger
+        EXIT_CODE=${?}
+        if (( EXIT_CODE == 0 ))
+        then
+            ${WRITE_W} ok ${wNum}
+            udevadm control --reload-rules
+            udevadm trigger
+        else
+            ${WRITE_W} error ${wNum}
+            loginctl attach seat0 ${SECONDARY_SEATS[$(( fKey - 1 ))]} ${PARENT_SYSPATH}
+        fi
 
         exit 0
     else
