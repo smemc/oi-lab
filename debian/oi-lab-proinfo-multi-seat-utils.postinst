@@ -4,12 +4,12 @@ set -e
 install () {
     for i in 0 1
     do
-        systemctl enable oi-lab-xorg-daemon@${i}.socket
-        systemctl start oi-lab-xorg-daemon@${i}.socket
+        systemctl enable oi-lab-xorg-daemon@${i}.socket || true
+        systemctl start oi-lab-xorg-daemon@${i}.socket || true
     done
 
-    systemctl enable oi-lab-multi-seat-config-xorg@10.socket
-    systemctl start oi-lab-multi-seat-config-xorg@10.socket
+    systemctl enable oi-lab-multi-seat-config-xorg@10.socket || true
+    systemctl start oi-lab-multi-seat-config-xorg@10.socket || true
 }
 
 case "${1}" in
