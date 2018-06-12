@@ -1,6 +1,9 @@
 {
-    "files.associations": {
-        "randr.h": "c",
-        "argp.h": "c"
-    }
+  "files.associations": {
+    "randr.h": "c",
+    "typeinfo": "c",
+    "stdio.h": "c",
+    "xcb.h": "c",
+    "cairo-xcb.h": "c"
+  }
 }
