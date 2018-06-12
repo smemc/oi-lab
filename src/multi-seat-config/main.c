@@ -3,13 +3,68 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <xcb/xcb.h>
 #include <xcb/xcb_aux.h>
 #include <cairo.h>
 #include <unistd.h>
 
 #define MAX_XCB_WINDOWS 10
-#define MAX_STRING_LENGTH 128
+#define MAX_STRING_LENGTH 256
+#define MAX_INPUT_DEVICES 30
+#define MAX_VIDEO_DEVICES 10
+
+#define LOG_OPEN openlog(NULL, LOG_CONS | LOG_PID, LOG_USER)
+#define LOG_CLOSE closelog()
+
+#define LOG_MESSAGE(x, ...)                 \
+  ({                                        \
+    printf("INFO: " x "\n", ##__VA_ARGS__); \
+    syslog(LOG_NOTICE, x, ##__VA_ARGS__);   \
+  })
+
+#define LOG_ERROR(x, ...)                             \
+  ({                                                  \
+    fprintf(stderr, "ERROR: " x "\n", ##__VA_ARGS__); \
+    syslog(LOG_ERR, x, ##__VA_ARGS__);                \
+  })
+
+struct hub_device
+{
+  char devpath[MAX_STRING_LENGTH];
+  char syspath[MAX_STRING_LENGTH];
+  char vendor_id[MAX_STRING_LENGTH];
+  char product_id[MAX_STRING_LENGTH];
+};
+
+struct input_device
+{
+  char devnode[MAX_STRING_LENGTH];
+  char devpath[MAX_STRING_LENGTH];
+  char syspath[MAX_STRING_LENGTH];
+  struct hub_device parent;
+};
+
+struct video_device
+{
+  char devnode[MAX_STRING_LENGTH];
+  char devpath[MAX_STRING_LENGTH];
+  char syspath[MAX_STRING_LENGTH];
+  char output[MAX_STRING_LENGTH];
+};
+
+struct seat_window
+{
+  int x;
+  int y;
+  unsigned int width;
+  unsigned int height;
+  char name[MAX_STRING_LENGTH];
+  xcb_window_t id;
+  xcb_connection_t *connection;
+  xcb_screen_t *screen;
+  cairo_t *cr;
+};
 
 bool get_output_geometry(xcb_connection_t *connection,
                          xcb_screen_t *screen,
@@ -40,18 +95,10 @@ void write_message(xcb_connection_t *connection,
                    const char *lines[],
                    unsigned int num_lines);
 
-struct seat_window
-{
-  int x;
-  int y;
-  unsigned int width;
-  unsigned int height;
-  char name[MAX_STRING_LENGTH];
-  xcb_window_t id;
-  xcb_connection_t *connection;
-  xcb_screen_t *screen;
-  cairo_t *cr;
-};
+bool scan_udev_devices(struct input_device input_devices_list[],
+                       unsigned int *input_devices_list_length,
+                       struct video_device video_devices_list[],
+                       unsigned int *video_devices_list_length);
 
 static bool
 geometry_regex_match(const char *text)
@@ -83,6 +130,29 @@ int main(int argc, char *argv[])
   const char *lines[1];
   unsigned int num_lines = 1;
   lines[0] = "Aguarde...";
+
+  struct input_device detected_input_devices[MAX_INPUT_DEVICES];
+  struct video_device detected_video_devices[MAX_VIDEO_DEVICES];
+  unsigned int num_detected_input_devices = 0,
+               num_detected_video_devices = 0;
+
+  LOG_OPEN;
+
+  if (!scan_udev_devices(detected_input_devices,
+                         &num_detected_input_devices,
+                         detected_video_devices,
+                         &num_detected_video_devices))
+  {
+    LOG_ERROR("Failed to scan input/video devices!");
+    exit(1);
+  }
+
+  for (int i = 0; i < num_detected_input_devices; i++)
+    LOG_MESSAGE("[%d] devnode=%s\n          devpath=%s\n          syspath=%s",
+                i,
+                detected_input_devices[i].devnode,
+                detected_input_devices[i].devpath,
+                detected_input_devices[i].syspath);
 
   for (int i = 1, j = 0; i < argc; i++)
   {
@@ -158,5 +228,6 @@ int main(int argc, char *argv[])
   for (int i = 0; i < num_windows; i++)
     xcb_disconnect(windows[i].connection);
 
+  LOG_CLOSE;
   return 0;
 }
