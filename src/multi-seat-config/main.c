@@ -131,8 +131,6 @@ geometry_regex_match(const char *text)
 
 int main(int argc, char *argv[])
 {
-  int status;
-
   struct seat_window windows[MAX_XCB_WINDOWS];
 
   unsigned int num_windows = 0;
@@ -232,13 +230,15 @@ int main(int argc, char *argv[])
   for (int i = 0; i < num_windows; i++)
     xcb_aux_sync(windows[i].connection);
 
-  /* Start a background proccess for reading input devices for each expected key. */
-  int num_keys = 3;
-  int num_unread_keys = num_keys;
-  for (int expected_key = 1; expected_key <= num_keys; expected_key++)
+  /* Start a background process for reading input devices for each expected key. */
+  int max_key = 3;
+  int num_unread_keys = max_key;
+  pid_t child_pids[max_key];
+  for (int expected_key = 1; expected_key <= max_key; expected_key++)
   {
-    if (fork() == 0)
+    if ((child_pids[expected_key - 1] = fork()) == 0)
     {
+      /* Here we are in a child process */
       struct input_device triggered_input_device;
 
       LOG_MESSAGE("Waiting for F%d key press...", expected_key);
@@ -255,16 +255,26 @@ int main(int argc, char *argv[])
     }
   }
 
-  /* Wait for all background proccesses */
-  pid_t child_pid;
-  while ((child_pid = wait(&status)) > 0)
+  /* Wait for all child processes */
+  pid_t waited_pid;
+  while ((waited_pid = wait(NULL)) > 0)
   {
-    if (--num_unread_keys > 0)
-      LOG_MESSAGE("Child PID %d terminated. Waiting for remaining %d PIDs...",
-                  child_pid,
-                  num_unread_keys);
-    else
-      LOG_MESSAGE("Child PID %d terminated. All PIDs terminated.", child_pid);
+    for (int pressed_key = 1; pressed_key <= max_key; pressed_key++)
+    {
+      if (child_pids[pressed_key - 1] == waited_pid)
+      {
+        if (--num_unread_keys > 0)
+          LOG_MESSAGE("Child PID for F%d key press terminated. Waiting for remaining %d PIDs...",
+                      pressed_key,
+                      num_unread_keys);
+        else
+          LOG_MESSAGE("Child PID for F%d key press terminated. All PIDs terminated.", pressed_key);
+
+        break;
+      }
+      else if (pressed_key == max_key)
+        LOG_MESSAGE("Unknown PID %d", waited_pid);
+    }
   }
 
   for (int i = 0; i < num_windows; i++)
