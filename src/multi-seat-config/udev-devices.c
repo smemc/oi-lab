@@ -204,6 +204,9 @@ bool scan_udev_devices(struct input_device input_devices_list[],
   if (udev_enumerate_add_match_subsystem(video_kms_enumerate, "drm") < 0)
     LOG_ERROR("Failed to add subsystem \"drm\" to DRM/KMS video matching rules.");
 
+  if (udev_enumerate_add_match_subsystem(video_kms_enumerate, "graphics") < 0)
+    LOG_ERROR("Failed to add subsystem \"drm\" to DRM/KMS video matching rules.");
+
   if (udev_enumerate_add_match_subsystem(video_sm501_enumerate, "platform") < 0)
     LOG_ERROR("Failed to add subsystem \"platform\" to SM501 video matching rules.");
 
@@ -355,7 +358,7 @@ bool scan_udev_devices(struct input_device input_devices_list[],
       devseat = "seat0";
     */
 
-    if (starts_with(devnode, "/dev/dri"))
+    if (starts_with(devnode, "/dev/dri") || starts_with(devnode, "/dev/fb"))
     {
       struct video_device videodev;
 
@@ -404,7 +407,8 @@ bool scan_udev_devices(struct input_device input_devices_list[],
   return true;
 }
 
-void read_node(unsigned char *buffer, int sock, int how_many)
+static void
+read_node(unsigned char *buffer, int sock, int how_many)
 {
   /* Keep calling recv until everything is received */
   int pointer = 0;
@@ -501,18 +505,32 @@ read_input_devices(struct input_device input_devices_list[],
           /* f1..f10 */
           if (ev.type == EV_KEY && ev.value == EV_PRESS &&
               ((ev.code - (KEY_F1) + 1) == expected_key))
+          {
+            LOG_MESSAGE("F%d key press detected by keyboard %s",
+                        expected_key,
+                        input_devices_list[i].devnode);
             return input_devices_list[i];
+          }
 
           /* f11 or f12 */
           if (ev.type == EV_KEY && ev.value == EV_PRESS &&
               ((ev.code == KEY_F11 && expected_key == 11) ||
                (ev.code == KEY_F12 && expected_key == 12)))
+          {
+            LOG_MESSAGE("F%d key press detected by keyboard %s",
+                        expected_key,
+                        input_devices_list[i].devnode);
             return input_devices_list[i];
+          }
 
           /* left button */
           if (ev.type == EV_KEY && ev.value == EV_PRESS &&
               ev.code == BTN_LEFT && expected_key == 13)
+          {
+            LOG_MESSAGE("Button press detected by mouse %s",
+                        input_devices_list[i].devnode);
             return input_devices_list[i];
+          }
 
           /* enter */
           if (ev.type == EV_KEY && ev.value == EV_PRESS &&
@@ -528,7 +546,10 @@ read_input_devices(struct input_device input_devices_list[],
       }
     }
     else
+    {
+      LOG_MESSAGE("F%d key press detection timed out", expected_key);
       return default_timeout;
+    }
   }
 }
 
