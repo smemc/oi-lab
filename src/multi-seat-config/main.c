@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <sys/wait.h>
 #include <xcb/xcb.h>
 #include <xcb/xcb_aux.h>
 #include <cairo.h>
@@ -13,6 +14,8 @@
 #define MAX_STRING_LENGTH 256
 #define MAX_INPUT_DEVICES 30
 #define MAX_VIDEO_DEVICES 10
+
+#define STREQ(x, y) ((x) && (y) && strcmp((x), (y)) == 0)
 
 #define LOG_OPEN openlog(NULL, LOG_CONS | LOG_PID, LOG_USER)
 #define LOG_CLOSE closelog()
@@ -100,6 +103,11 @@ bool scan_udev_devices(struct input_device input_devices_list[],
                        struct video_device video_devices_list[],
                        unsigned int *video_devices_list_length);
 
+struct input_device
+read_input_devices(struct input_device input_devices_list[],
+                   int input_devices_list_length,
+                   int expected_key);
+
 static bool
 geometry_regex_match(const char *text)
 {
@@ -123,6 +131,8 @@ geometry_regex_match(const char *text)
 
 int main(int argc, char *argv[])
 {
+  int status;
+
   struct seat_window windows[MAX_XCB_WINDOWS];
 
   unsigned int num_windows = 0;
@@ -222,8 +232,40 @@ int main(int argc, char *argv[])
   for (int i = 0; i < num_windows; i++)
     xcb_aux_sync(windows[i].connection);
 
-  /* Main loop should go here */
-  sleep(60);
+  /* Start a background proccess for reading input devices for each expected key. */
+  int num_keys = 3;
+  int num_unread_keys = num_keys;
+  for (int expected_key = 1; expected_key <= num_keys; expected_key++)
+  {
+    if (fork() == 0)
+    {
+      struct input_device triggered_input_device;
+
+      LOG_MESSAGE("Waiting for F%d key press...", expected_key);
+
+      do
+      {
+        triggered_input_device =
+            read_input_devices(detected_input_devices,
+                               num_detected_input_devices,
+                               expected_key);
+      } while (STREQ(triggered_input_device.devnode, "timeout"));
+
+      return 0;
+    }
+  }
+
+  /* Wait for all background proccesses */
+  pid_t child_pid;
+  while ((child_pid = wait(&status)) > 0)
+  {
+    if (--num_unread_keys > 0)
+      LOG_MESSAGE("Child PID %d terminated. Waiting for remaining %d PIDs...",
+                  child_pid,
+                  num_unread_keys);
+    else
+      LOG_MESSAGE("Child PID %d terminated. All PIDs terminated.", child_pid);
+  }
 
   for (int i = 0; i < num_windows; i++)
     xcb_disconnect(windows[i].connection);
