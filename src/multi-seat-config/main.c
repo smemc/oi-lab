@@ -119,7 +119,7 @@ geometry_regex_match(const char *text)
 
   if (regcomp(&reg, geometry_regex, REG_EXTENDED | REG_NOSUB) != 0)
   {
-    fprintf(stderr, "erro regcomp\n");
+    LOG_ERROR("regcomp error");
     exit(1);
   }
 
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
 
       if (xcb_connection_has_error(windows[j].connection))
       {
-        fprintf(stderr, "Cannot open display %s.\n", display_name);
+        LOG_ERROR("Cannot open display %s.", display_name);
         exit(1);
       }
 
