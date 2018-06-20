@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import re
-from sys import argv
+from sys import argv, stdout
+
+import logging
+from systemd.journal import JournalHandler
 
 import pyudev
 
@@ -37,20 +40,20 @@ class NodelessDevice:
 
 class Device(NodelessDevice):
     def __init__(self, device):
-        super().__init__(self, device)
+        super().__init__(device)
         self.device_node = device.device_node
 
 
 class USBHubDevice(NodelessDevice):
     def __init__(self, device):
-        super().__init__(self, device)
-        self.product_id = device.attributes.asstring('productId')
-        self.vendor_id = device.attributes.asstring('vendorId')
+        super().__init__(device)
+        self.product_id = device.attributes.asstring('idProduct')
+        self.vendor_id = device.attributes.asstring('idVendor')
 
 
 class InputDevice(Device):
     def __init__(self, device):
-        super().__init__(self, device)
+        super().__init__(device)
         self.parent = USBHubDevice(
             device.find_parent('usb', device_type='usb_device')
         )
@@ -58,13 +61,13 @@ class InputDevice(Device):
 
 class KMSVideoDevice(Device):
     def __init__(self, fb, drm):
-        super().__init__(self, fb)
+        super().__init__(fb)
         self.drm = [Device(d) for d in drm]
 
 
 class SM501VideoDevice(NodelessDevice):
     def __init__(self, device):
-        super().__init__(self, device)
+        super().__init__(device)
         self.output = device.device.get('SM501_OUTPUT')
 
 
@@ -197,12 +200,12 @@ class Window:
 
 def scan_keyboard_devices(context):
     devices = context.list_devices(subsystem='input', ID_INPUT_KEYBOARD='1')
-    return [InputDevice(device) for device in devices]
+    return [InputDevice(device) for device in devices if device.device_node]
 
 
 def scan_mouse_devices(context):
     devices = context.list_devices(subsystem='input', ID_INPUT_MOUSE='1')
-    return [InputDevice(device) for device in devices]
+    return [InputDevice(device) for device in devices if device.device_node]
 
 
 def scan_kms_video_devices(context):
@@ -220,11 +223,36 @@ def scan_sm501_video_devices(context):
 
 
 def main():
+    logger = logging.getLogger(argv[0])
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+    stdout_handler = logging.StreamHandler(stdout)
+    stdout_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(name)s[%(process)s] %(levelname)s %(message)s'))
+    logger.addHandler(stdout_handler)
+    logger.addHandler(JournalHandler())
+
     context = pyudev.Context()
     keyboard_devices = scan_keyboard_devices(context)
     mouse_devices = scan_mouse_devices(context)
     kms_video_devices = scan_kms_video_devices(context)
     sm501_video_devices = scan_sm501_video_devices(context)
+
+    for device in keyboard_devices:
+        logger.info('Keyboard detected: %s -> %s',
+                    device.device_node, device.sys_path)
+
+    for device in mouse_devices:
+        logger.info('Mouse detected: %s -> %s',
+                    device.device_node, device.sys_path)
+
+    for device in kms_video_devices:
+        logger.info('KMS/DRM video detected: %s -> %s',
+                    device.device_node, device.sys_path)
+
+    for device in sm501_video_devices:
+        logger.info('SM501 video detected: %s', device.sys_path)
+
     windows = []
 
     for arg in argv[1:]:
