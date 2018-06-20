@@ -35,6 +35,7 @@ class NodelessDevice:
     def __init__(self, device):
         self.device_path = device.device_path
         self.sys_path = device.sys_path
+        self.sys_name = device.sys_name
         self.seat_name = device.get('ID_SEAT')
 
 
@@ -199,20 +200,23 @@ class Window:
 
 
 def scan_keyboard_devices(context):
-    devices = context.list_devices(subsystem='input', ID_INPUT_KEYBOARD='1')
+    devices = context.list_devices(subsystem='input', ID_INPUT_KEYBOARD=True)
     return [InputDevice(device) for device in devices if device.device_node]
 
 
 def scan_mouse_devices(context):
-    devices = context.list_devices(subsystem='input', ID_INPUT_MOUSE='1')
+    devices = context.list_devices(subsystem='input',
+                                   ID_INPUT_MOUSE=True,
+                                   sys_name='event*')
     return [InputDevice(device) for device in devices if device.device_node]
 
 
 def scan_kms_video_devices(context):
-    drms = context.list_devices(subsystem='drm', DEVNAME='/dev/dri/*')
-    fbs = context.list_devices(subsystem='graphics', DEVNAME='/dev/fb*')
-    devices = [(fb, [drm for drm in drms if drm.parent == fb.parent])
-               for fb in fbs]
+    drms = context.list_devices(subsystem='drm')
+    fbs = context.list_devices(subsystem='graphics')
+    devices = [(fb, [drm for drm in drms
+                     if drm.parent == fb.parent and drm.device_node])
+               for fb in fbs if fb.device_node]
     return [KMSVideoDevice(*device) for device in devices]
 
 
@@ -239,22 +243,22 @@ def main():
 
     for device in keyboard_devices:
         logger.info('Keyboard detected: %s -> %s',
-                    device.device_node, device.sys_path)
+                    device.device_node, device.sys_name)
 
     for device in mouse_devices:
         logger.info('Mouse detected: %s -> %s',
-                    device.device_node, device.sys_path)
+                    device.device_node, device.sys_name)
 
     for device in kms_video_devices:
         logger.info('KMS video detected: %s -> %s',
-                    device.device_node, device.sys_path)
+                    device.device_node, device.sys_name)
 
         for drm in device.drm:
             logger.info('>>> DRM node detected: %s -> %s',
-                        drm.device_node, drm.sys_path)
+                        drm.device_node, drm.sys_name)
 
     for device in sm501_video_devices:
-        logger.info('SM501 video detected: %s', device.sys_path)
+        logger.info('SM501 video detected: %s', device.sys_name)
 
     windows = []
 
