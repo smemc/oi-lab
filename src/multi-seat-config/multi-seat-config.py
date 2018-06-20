@@ -211,10 +211,9 @@ def scan_mouse_devices(context):
 def scan_kms_video_devices(context):
     drms = context.list_devices(subsystem='drm', DEVNAME='/dev/dri/*')
     fbs = context.list_devices(subsystem='graphics', DEVNAME='/dev/fb*')
-    devices = [{'fb': fb, 'drm': [drm for drm in drms
-                                  if drm.parent == fb.parent]}
+    devices = [(fb, [drm for drm in drms if drm.parent == fb.parent])
                for fb in fbs]
-    return [KMSVideoDevice(**device) for device in devices]
+    return [KMSVideoDevice(*device) for device in devices]
 
 
 def scan_sm501_video_devices(context):
@@ -247,8 +246,12 @@ def main():
                     device.device_node, device.sys_path)
 
     for device in kms_video_devices:
-        logger.info('KMS/DRM video detected: %s -> %s',
+        logger.info('KMS video detected: %s -> %s',
                     device.device_node, device.sys_path)
+
+        for drm in device.drm:
+            logger.info('>>> DRM node detected: %s -> %s',
+                        drm.device_node, drm.sys_path)
 
     for device in sm501_video_devices:
         logger.info('SM501 video detected: %s', device.sys_path)
