@@ -3,10 +3,13 @@
 
 import re
 from sys import argv
+
+import pyudev
+
 import xcffib
 from xcffib import (NONE, randr)
 from xcffib.xproto import (Atom, CW, ConfigWindow, PropMode, WindowClass)
-from cairocffi import (Context, XCBSurface)
+import cairocffi
 
 from time import (sleep, time)
 
@@ -23,6 +26,46 @@ def find_root_visual(screen):
         for v in i.visuals:
             if v.visual_id == screen.root_visual:
                 return v
+
+
+class NodelessDevice:
+    def __init__(self, device):
+        self.device_path = device.device_path
+        self.sys_path = device.sys_path
+        self.seat_name = device.get('ID_SEAT')
+
+
+class Device(NodelessDevice):
+    def __init__(self, device):
+        super().__init__(self, device)
+        self.device_node = device.device_node
+
+
+class USBHubDevice(NodelessDevice):
+    def __init__(self, device):
+        super().__init__(self, device)
+        self.product_id = device.attributes.asstring('productId')
+        self.vendor_id = device.attributes.asstring('vendorId')
+
+
+class InputDevice(Device):
+    def __init__(self, device):
+        super().__init__(self, device)
+        self.parent = USBHubDevice(
+            device.find_parent('usb', device_type='usb_device')
+        )
+
+
+class KMSVideoDevice(Device):
+    def __init__(self, fb, drm):
+        super().__init__(self, fb)
+        self.drm = [Device(d) for d in drm]
+
+
+class SM501VideoDevice(NodelessDevice):
+    def __init__(self, device):
+        super().__init__(self, device)
+        self.output = device.device.get('SM501_OUTPUT')
 
 
 class Window:
@@ -89,11 +132,13 @@ class Window:
         #                                     [self.x, self.y])
 
         # Set Cairo surface with given text font
-        self.context = Context(XCBSurface(self.connection,
-                                          self.id,
-                                          find_root_visual(screen),
-                                          self.width,
-                                          self.height))
+        self.context = cairocffi.Context(
+            cairocffi.XCBSurface(self.connection,
+                                 self.id,
+                                 find_root_visual(screen),
+                                 self.width,
+                                 self.height)
+        )
         self.context.select_font_face('sans-serif')
         self.context.set_font_size(12)
         self.context.set_source_rgb(0, 0, 0)
@@ -150,7 +195,36 @@ class Window:
         self.connection.flush()
 
 
+def scan_keyboard_devices(context):
+    devices = context.list_devices(subsystem='input', ID_INPUT_KEYBOARD='1')
+    return [InputDevice(device) for device in devices]
+
+
+def scan_mouse_devices(context):
+    devices = context.list_devices(subsystem='input', ID_INPUT_MOUSE='1')
+    return [InputDevice(device) for device in devices]
+
+
+def scan_kms_video_devices(context):
+    drms = context.list_devices(subsystem='drm', DEVNAME='/dev/dri/*')
+    fbs = context.list_devices(subsystem='graphics', DEVNAME='/dev/fb*')
+    devices = [{'fb': fb, 'drm': [drm for drm in drms
+                                  if drm.parent == fb.parent]}
+               for fb in fbs]
+    return [KMSVideoDevice(**device) for device in devices]
+
+
+def scan_sm501_video_devices(context):
+    devices = context.list_devices(subsystem='platform', tag='master-of-seat')
+    return [SM501VideoDevice(device) for device in devices]
+
+
 def main():
+    context = pyudev.Context()
+    keyboard_devices = scan_keyboard_devices(context)
+    mouse_devices = scan_mouse_devices(context)
+    kms_video_devices = scan_kms_video_devices(context)
+    sm501_video_devices = scan_sm501_video_devices(context)
     windows = []
 
     for arg in argv[1:]:
