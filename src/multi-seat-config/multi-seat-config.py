@@ -230,8 +230,11 @@ def main():
     logger.setLevel(logging.INFO)
     logger.propagate = False
     stdout_handler = logging.StreamHandler(stdout)
-    stdout_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(name)s[%(process)s] %(levelname)s %(message)s'))
+    stdout_handler.setFormatter(
+        logging.Formatter(
+            '%(asctime)s %(name)s[%(process)s] %(levelname)s %(message)s'
+        )
+    )
     logger.addHandler(stdout_handler)
     logger.addHandler(JournalHandler())
 
@@ -243,22 +246,22 @@ def main():
 
     for device in keyboard_devices:
         logger.info('Keyboard detected: %s -> %s',
-                    device.device_node, device.sys_name)
+                    device.device_node, device.sys_path)
 
     for device in mouse_devices:
         logger.info('Mouse detected: %s -> %s',
-                    device.device_node, device.sys_name)
+                    device.device_node, device.sys_path)
 
     for device in kms_video_devices:
         logger.info('KMS video detected: %s -> %s',
-                    device.device_node, device.sys_name)
+                    device.device_node, device.sys_path)
 
         for drm in device.drm:
             logger.info('>>> DRM node detected: %s -> %s',
-                        drm.device_node, drm.sys_name)
+                        drm.device_node, drm.sys_path)
 
     for device in sm501_video_devices:
-        logger.info('SM501 video detected: %s', device.sys_name)
+        logger.info('SM501 video detected: %s', device.sys_path)
 
     windows = []
 
