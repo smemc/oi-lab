@@ -43,7 +43,7 @@ def find_root_visual(screen):
                 return v
 
 
-class NodelessDevice:
+class SeatNodelessDevice:
     def __init__(self, device):
         self.device_path = device.device_path
         self.sys_path = device.sys_path
@@ -51,20 +51,20 @@ class NodelessDevice:
         self.seat_name = device.get('ID_SEAT')
 
 
-class Device(NodelessDevice):
+class SeatDevice(SeatNodelessDevice):
     def __init__(self, device):
         super().__init__(device)
         self.device_node = device.device_node
 
 
-class USBHubDevice(NodelessDevice):
+class SeatHubDevice(SeatNodelessDevice):
     def __init__(self, device):
         super().__init__(device)
         self.product_id = device.attributes.asstring('idProduct')
         self.vendor_id = device.attributes.asstring('idVendor')
 
 
-class InputDevice(Device):
+class SeatInputDevice(SeatDevice):
     def __init__(self, device):
         def get_parent_hub(device):
             parent = device.find_parent('usb', device_type='usb_device')
@@ -72,16 +72,16 @@ class InputDevice(Device):
                 parent if 'seat' in parent.tags else get_parent_hub(parent))
 
         super().__init__(device)
-        self.parent = USBHubDevice(get_parent_hub(device))
+        self.parent = SeatHubDevice(get_parent_hub(device))
 
 
-class KMSVideoDevice(Device):
+class SeatKMSVideoDevice(SeatDevice):
     def __init__(self, fb, drm):
         super().__init__(fb)
-        self.drm = [Device(d) for d in drm]
+        self.drm = [SeatDevice(d) for d in drm]
 
 
-class SM501VideoDevice(NodelessDevice):
+class SeatSM501VideoDevice(SeatNodelessDevice):
     def __init__(self, device):
         super().__init__(device)
         self.output = device.device.get('SM501_OUTPUT')
@@ -216,14 +216,14 @@ class Window:
 
 def scan_keyboard_devices(context):
     devices = context.list_devices(subsystem='input', ID_INPUT_KEYBOARD=True)
-    return [InputDevice(device) for device in devices if device.device_node]
+    return [SeatInputDevice(device) for device in devices if device.device_node]
 
 
 def scan_mouse_devices(context):
     devices = context.list_devices(subsystem='input',
                                    ID_INPUT_MOUSE=True,
                                    sys_name='event*')
-    return [InputDevice(device) for device in devices if device.device_node]
+    return [SeatInputDevice(device) for device in devices if device.device_node]
 
 
 def scan_kms_video_devices(context):
@@ -232,12 +232,12 @@ def scan_kms_video_devices(context):
     devices = [(fb, [drm for drm in drms
                      if drm.parent == fb.parent and drm.device_node])
                for fb in fbs if fb.device_node]
-    return [KMSVideoDevice(*device) for device in devices]
+    return [SeatKMSVideoDevice(*device) for device in devices]
 
 
 def scan_sm501_video_devices(context):
     devices = context.list_devices(subsystem='platform', tag='master-of-seat')
-    return [SM501VideoDevice(device) for device in devices]
+    return [SeatSM501VideoDevice(device) for device in devices]
 
 
 def main():
