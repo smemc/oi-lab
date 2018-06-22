@@ -16,6 +16,18 @@ import cairocffi
 
 from time import (sleep, time)
 
+logger = logging.getLogger(argv[0])
+logger.setLevel(logging.INFO)
+logger.propagate = False
+stdout_handler = logging.StreamHandler(stdout)
+stdout_handler.setFormatter(
+    logging.Formatter(
+        '%(asctime)s %(name)s[%(process)s] %(levelname)s %(message)s'
+    )
+)
+logger.addHandler(stdout_handler)
+logger.addHandler(JournalHandler())
+
 
 def parse_geometry(geometry):
     regex = '([0-9]+)x([0-9]+)(?:\\+([0-9]+)(?:\\+([0-9]+))?)?'
@@ -54,10 +66,13 @@ class USBHubDevice(NodelessDevice):
 
 class InputDevice(Device):
     def __init__(self, device):
+        def get_parent_hub(device):
+            parent = device.find_parent('usb', device_type='usb_device')
+            return None if parent is None else (
+                parent if 'seat' in parent.tags else get_parent_hub(parent))
+
         super().__init__(device)
-        self.parent = USBHubDevice(
-            device.find_parent('usb', device_type='usb_device')
-        )
+        self.parent = USBHubDevice(get_parent_hub(device))
 
 
 class KMSVideoDevice(Device):
@@ -226,18 +241,6 @@ def scan_sm501_video_devices(context):
 
 
 def main():
-    logger = logging.getLogger(argv[0])
-    logger.setLevel(logging.INFO)
-    logger.propagate = False
-    stdout_handler = logging.StreamHandler(stdout)
-    stdout_handler.setFormatter(
-        logging.Formatter(
-            '%(asctime)s %(name)s[%(process)s] %(levelname)s %(message)s'
-        )
-    )
-    logger.addHandler(stdout_handler)
-    logger.addHandler(JournalHandler())
-
     context = pyudev.Context()
     keyboard_devices = scan_keyboard_devices(context)
     mouse_devices = scan_mouse_devices(context)
@@ -247,10 +250,12 @@ def main():
     for device in keyboard_devices:
         logger.info('Keyboard detected: %s -> %s',
                     device.device_node, device.sys_path)
+        logger.info('>>> Parent device: %s', device.parent.sys_path)
 
     for device in mouse_devices:
         logger.info('Mouse detected: %s -> %s',
                     device.device_node, device.sys_path)
+        logger.info('>>> Parent device: %s', device.parent.sys_path)
 
     for device in kms_video_devices:
         logger.info('KMS video detected: %s -> %s',
