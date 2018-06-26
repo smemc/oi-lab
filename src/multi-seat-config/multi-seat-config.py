@@ -239,10 +239,13 @@ async def read_all_keys(windows, device):
     def refresh_screens(windows, pressed_keys):
         for (index, window) in enumerate(windows):
             window.load_image(
-                f'seat{index + 1}-{"".join(str(int(is_pressed)) for is_pressed in pressed_keys)}.png'
+                'seat{}-{}.png'.format(index + 1,
+                                       ''.join(str(int(is_pressed))
+                                               for is_pressed in pressed_keys)
+                                       )
             )
             window.write_message(
-                f'Teclados disponíveis: {pressed_keys.count(False)}'
+                'Teclados disponíveis: {}'.format(pressed_keys.count(False))
             )
 
     pressed_keys = [False, False, True, True]
@@ -250,7 +253,9 @@ async def read_all_keys(windows, device):
 
     while False in pressed_keys:
         pressed_key = await read_key(device)
-        logger.info(f'Key F{pressed_key} pressed on keyboard {device.fn}')
+        logger.info(
+            'Key F{} pressed on keyboard {}'.format(pressed_key, device.fn)
+        )
 
         if (pressed_key == 1 or pressed_key == 2):
             pressed_keys[pressed_key - 1] = True
@@ -297,7 +302,7 @@ def main():
                         for geometry in geometries])
 
     for (index, window) in enumerate(windows):
-        window.set_wm_name(f'w{index + 1}')
+        window.set_wm_name('w{}'.format(index + 1))
         window.load_image('wait-loading.png')
 
     sleep(1)
