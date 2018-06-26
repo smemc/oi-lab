@@ -7,7 +7,9 @@ from sys import argv, stdout
 import logging
 from systemd.journal import JournalHandler
 
+import asyncio
 import pyudev
+from evdev import (InputDevice, ecodes)
 
 import xcffib
 from xcffib import (NONE, randr)
@@ -158,9 +160,6 @@ class Window:
                                  self.width,
                                  self.height)
         )
-        self.context.select_font_face('sans-serif')
-        self.context.set_font_size(12)
-        self.context.set_source_rgb(0, 0, 0)
 
         self.connection.flush()
 
@@ -174,42 +173,29 @@ class Window:
                                             len(name),
                                             name)
 
+    def load_image(self, image_path):
+        self.connection.core.ClearArea(False, self.id, 0, 0, 0, 0)
+
+        image_surface = cairocffi.ImageSurface.create_from_png(image_path)
+        image_width = image_surface.get_width()
+        image_height = image_surface.get_height()
+
+        self.context.set_source_rgb(0, 136/255, 170/255)
+        self.context.paint()
+
+        self.context.set_source_surface(image_surface,
+                                        (self.width-image_width) / 2,
+                                        (self.height-image_height) / 2)
+        self.context.paint()
+
+        self.connection.flush()
+
     def write_message(self, message):
-        lines = message.split('\n')
-        y_all_extents = 0.
-
-        # Set text position
-        for line in lines:
-            (x_bearing,
-             y_bearing,
-             text_width,
-             text_height,
-             *_) = self.context.text_extents(line)
-            y_all_extents += (text_height/2 + y_bearing*2)
-
-        y_all_extents = y_all_extents/2
-        (x_bearing,
-         y_bearing,
-         text_width,
-         text_height,
-         *_) = self.context.text_extents(lines[0])
-        x = self.width/2 - (text_width/2 + x_bearing)
-        y = y_all_extents + self.height/2 - (text_height/2 + y_bearing)
-        self.context.move_to(x, y)
-
-        # Write text
-        for line in lines:
-            (x_bearing,
-             y_bearing,
-             text_width,
-             text_height,
-             *_) = self.context.text_extents(line)
-            x = self.width/2 - (text_width/2 + x_bearing)
-
-            self.context.move_to(x, y)
-            self.context.show_text(line)
-
-            y -= (text_height/2 + y_bearing*2)
+        self.context.select_font_face('sans-serif')
+        self.context.set_font_size(24)
+        self.context.set_source_rgb(1, 1, 1)
+        self.context.move_to(10, 30)
+        self.context.show_text(message)
 
         self.connection.flush()
 
@@ -238,6 +224,37 @@ def scan_kms_video_devices(context):
 def scan_sm501_video_devices(context):
     devices = context.list_devices(subsystem='platform', tag='master-of-seat')
     return [SeatSM501VideoDevice(device) for device in devices]
+
+
+async def read_key(device):
+    async for event in device.async_read_loop():
+        # Reminder: EV_KEY event values: 0 (release), 1 (press), or 2 (hold)
+        # pylint: disable=no-member
+        if event.type == ecodes.EV_KEY and event.value == 1:
+            key = event.code - ecodes.KEY_F2 + 2
+            return key
+
+
+async def read_all_keys(windows, device):
+    def refresh_screens(windows, pressed_keys):
+        for (index, window) in enumerate(windows):
+            window.load_image(
+                f'seat{index + 1}-{"".join(str(int(is_pressed)) for is_pressed in pressed_keys)}.png'
+            )
+            window.write_message(
+                f'Teclados disponíveis: {pressed_keys.count(False)}'
+            )
+
+    pressed_keys = [False, False, True, True]
+    refresh_screens(windows, pressed_keys)
+
+    while False in pressed_keys:
+        pressed_key = await read_key(device)
+        logger.info(f'Key F{pressed_key} pressed on keyboard {device.fn}')
+
+        if (pressed_key == 1 or pressed_key == 2):
+            pressed_keys[pressed_key - 1] = True
+            refresh_screens(windows, pressed_keys)
 
 
 def main():
@@ -276,14 +293,18 @@ def main():
         if len(geometries) == 0:
             geometries = [None]
 
-        windows.extend([Window(xcffib.connect(display=display_name), g)
-                        for g in geometries])
+        windows.extend([Window(xcffib.connect(display=display_name), geometry)
+                        for geometry in geometries])
 
-    for (i, w) in enumerate(windows):
-        w.set_wm_name(f'w{i + 1}')
-        w.write_message(f'Criada janela w{i + 1}.\nAguarde...')
+    for (index, window) in enumerate(windows):
+        window.set_wm_name(f'w{index + 1}')
+        window.load_image('wait-loading.png')
 
-    sleep(10)
+    sleep(1)
+    keybd = InputDevice(keyboard_devices[0].device_node)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(read_all_keys(windows, keybd))
+    sleep(1)
 
 
 if __name__ == '__main__':
