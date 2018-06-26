@@ -234,6 +234,8 @@ async def read_key(device):
             key = event.code - ecodes.KEY_F2 + 2
             return key
 
+pressed_keys = [False, False, True, True]
+
 
 async def read_all_keys(windows, device):
     def refresh_screens(windows, pressed_keys):
@@ -248,18 +250,20 @@ async def read_all_keys(windows, device):
                 'Teclados disponíveis: {}'.format(pressed_keys.count(False))
             )
 
-    pressed_keys = [False, False, True, True]
+    new_key_pressed = False
     refresh_screens(windows, pressed_keys)
 
-    while False in pressed_keys:
+    while not new_key_pressed:
         pressed_key = await read_key(device)
-        logger.info(
-            'Key F{} pressed on keyboard {}'.format(pressed_key, device.fn)
-        )
+        new_key_pressed = not pressed_keys[pressed_key - 1]
 
-        if (pressed_key == 1 or pressed_key == 2):
-            pressed_keys[pressed_key - 1] = True
-            refresh_screens(windows, pressed_keys)
+    logger.info(
+        'Key F{} pressed on keyboard {}'.format(pressed_key, device.fn)
+    )
+
+    if (pressed_key == 1 or pressed_key == 2):
+        pressed_keys[pressed_key - 1] = True
+        refresh_screens(windows, pressed_keys)
 
 
 def main():
@@ -306,9 +310,10 @@ def main():
         window.load_image('wait-loading.png')
 
     sleep(1)
-    keybd = InputDevice(keyboard_devices[0].device_node)
+    keybds = [InputDevice(device.device_node) for device in keyboard_devices]
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(read_all_keys(windows, keybd))
+    loop.run_until_complete(asyncio.gather(
+        *(read_all_keys(windows, keybd) for keybd in keybds)))
     sleep(1)
 
 
