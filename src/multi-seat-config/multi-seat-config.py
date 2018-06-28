@@ -18,6 +18,8 @@ import cairocffi
 
 from time import (sleep, time)
 
+MAX_SEAT_COUNT = 4
+
 logger = logging.getLogger(argv[0])
 logger.setLevel(logging.INFO)
 logger.propagate = False
@@ -152,7 +154,7 @@ class Window:
         #                                     ConfigWindow.X | ConfigWindow.Y,
         #                                     [self.x, self.y])
 
-        # Set Cairo surface with given text font
+        # Set Cairo surface and context
         self.context = cairocffi.Context(
             cairocffi.XCBSurface(self.connection,
                                  self.id,
@@ -226,46 +228,6 @@ def scan_sm501_video_devices(context):
     return [SeatSM501VideoDevice(device) for device in devices]
 
 
-async def read_key(device):
-    async for event in device.async_read_loop():
-        # Reminder: EV_KEY event values: 0 (release), 1 (press), or 2 (hold)
-        # pylint: disable=no-member
-        if event.type == ecodes.EV_KEY and event.value == 1:
-            key = event.code - ecodes.KEY_F2 + 2
-            return key
-
-pressed_keys = [False, False, True, True]
-
-
-async def read_all_keys(windows, device):
-    def refresh_screens(windows, pressed_keys):
-        for (index, window) in enumerate(windows):
-            window.load_image(
-                'seat{}-{}.png'.format(index + 1,
-                                       ''.join(str(int(is_pressed))
-                                               for is_pressed in pressed_keys)
-                                       )
-            )
-            window.write_message(
-                'Teclados disponíveis: {}'.format(pressed_keys.count(False))
-            )
-
-    new_key_pressed = False
-    refresh_screens(windows, pressed_keys)
-
-    while not new_key_pressed:
-        pressed_key = await read_key(device)
-        new_key_pressed = not pressed_keys[pressed_key - 1]
-
-    logger.info(
-        'Key F{} pressed on keyboard {}'.format(pressed_key, device.fn)
-    )
-
-    if (pressed_key == 1 or pressed_key == 2):
-        pressed_keys[pressed_key - 1] = True
-        refresh_screens(windows, pressed_keys)
-
-
 def main():
     context = pyudev.Context()
     keyboard_devices = scan_keyboard_devices(context)
@@ -309,11 +271,69 @@ def main():
         window.set_wm_name('w{}'.format(index + 1))
         window.load_image('wait-loading.png')
 
+    num_seats = len(windows)
+
+    # Put this in a list, so it can be used globally in coroutines
+    available_keyboards = [len(keyboard_devices)]
+
+    configured_seats = [False]*min(MAX_SEAT_COUNT, num_seats) + \
+        [None]*(MAX_SEAT_COUNT - num_seats)
+
+    def refresh_screens(loop):
+        for (index, window) in enumerate(windows):
+            status = ''.join(str(int(bool(is_configured)))
+                             for is_configured in configured_seats)
+            remaining_seats = configured_seats.count(False)
+            window.load_image('seat{}-{}.png'.format(index + 1, status))
+            window.write_message(
+                'Terminais restantes: {}        Teclados disponíveis: {}'
+                .format(remaining_seats, available_keyboards[0])
+            )
+
+            if remaining_seats == 0:
+                loop.stop()
+
+    # EV_KEY event values: 0 (release), 1 (press), or 2 (hold)
+    async def read_key(device):
+        async for event in device.async_read_loop():
+            # pylint: disable=no-member
+            if event.type == ecodes.EV_KEY and event.value == 1:
+                key = event.code - ecodes.KEY_F1
+                return key
+
+    async def read_all_keys(loop, device):
+        new_key_pressed = False
+        refresh_screens(loop)
+
+        while not new_key_pressed:
+            key = await read_key(device)
+            new_key_pressed = (configured_seats[key] == False)
+
+        if (key >= 0 and key <= 3):
+            logger.info('Key F{} pressed on keyboard {}'
+                        .format(key + 1, device.fn))
+            configured_seats[key] = True
+            available_keyboards[0] -= 1
+            refresh_screens(loop)
+
     sleep(1)
-    keybds = [InputDevice(device.device_node) for device in keyboard_devices]
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.gather(
-        *(read_all_keys(windows, keybd) for keybd in keybds)))
+
+    if num_seats > 1 and available_keyboards[0] > 1:
+        loop = asyncio.get_event_loop()
+        keybds = [InputDevice(device.device_node)
+                  for device in keyboard_devices]
+        coroutines = (read_all_keys(loop, keybd) for keybd in keybds)
+        future = asyncio.gather(*coroutines)
+
+        try:
+            loop.run_until_complete(future)
+        except RuntimeError as error:
+            if configured_seats.count(False) == 0:
+                pass
+            else:
+                raise error
+
+    logger.info('Multi-seat configuration finished.')
     sleep(1)
 
 
