@@ -4,17 +4,19 @@
 import re
 from sys import argv, stdout
 
+# Logging modules
 import logging
 from systemd.journal import JournalHandler
 
+# XCB window creation and drawing modules
+import xcffib
+from xcffib.xproto import (Atom, CW, ConfigWindow, PropMode, WindowClass)
+import cairocffi
+
+# Input device handling modules
 import asyncio
 import pyudev
 from evdev import (InputDevice, ecodes)
-
-import xcffib
-from xcffib import (NONE, randr)
-from xcffib.xproto import (Atom, CW, ConfigWindow, PropMode, WindowClass)
-import cairocffi
 
 from time import (sleep, time)
 
@@ -109,7 +111,7 @@ class Window:
             self.height = screen.height_in_pixels
 
             # Get window geometry from RandR output name
-            xrandr = connection(randr.key)
+            xrandr = connection(xcffib.randr.key)
             screen_resources = xrandr.GetScreenResources(screen.root).reply()
 
             for output in screen_resources.outputs:
@@ -121,7 +123,7 @@ class Window:
                     # Output found!
                     crtc = output_info.crtc
 
-                    if crtc != NONE:
+                    if crtc != xcffib.NONE:
                         # Output is enabled! Get its CRTC geometry
                         crtc_info = xrandr.GetCrtcInfo(
                             crtc, int(time())
