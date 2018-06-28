@@ -10,6 +10,7 @@ from systemd.journal import JournalHandler
 
 # XCB window creation and drawing modules
 import xcffib
+import xcffib.randr
 from xcffib.xproto import (Atom, CW, ConfigWindow, PropMode, WindowClass)
 import cairocffi
 
@@ -18,9 +19,15 @@ import asyncio
 import pyudev
 from evdev import (InputDevice, ecodes)
 
+# DBus modules (for communication with systemd-logind)
+from pydbus import SystemBus
+
 from time import (sleep, time)
 
 MAX_SEAT_COUNT = 4
+
+bus = SystemBus()
+logind = bus.get('.login1')
 
 logger = logging.getLogger(argv[0])
 logger.setLevel(logging.INFO)
@@ -38,7 +45,7 @@ logger.addHandler(JournalHandler())
 def parse_geometry(geometry):
     regex = '([0-9]+)x([0-9]+)(?:\\+([0-9]+)(?:\\+([0-9]+))?)?'
     match = re.match(regex, geometry).groups()
-    return [int(x) if x else 0 for x in match] if match is not None else None
+    return [int(x) if x else 0 for x in match] if match else None
 
 
 def find_root_visual(screen):
@@ -56,6 +63,14 @@ class SeatNodelessDevice:
         self.sys_name = device.sys_name
         self.seat_name = device.get('ID_SEAT')
 
+    def attach_to_seat(self, seat_name):
+        try:
+            logind.AttachDevice(seat_name, self.sys_path)
+        except Exception as error:
+            logger.error('Failed to attach device %s to seat %s!',
+                         self.sys_path, seat_name)
+            logger.error(error)
+
 
 class SeatDevice(SeatNodelessDevice):
     def __init__(self, device):
@@ -72,19 +87,45 @@ class SeatHubDevice(SeatNodelessDevice):
 
 class SeatInputDevice(SeatDevice):
     def __init__(self, device):
+        def is_root_hub(device):
+            # all root hubs have the same manufacturer 1d6b (Linux Foundation)
+            return device.attributes.asstring('idVendor') == '1d6b'
+
         def get_parent_hub(device):
             parent = device.find_parent('usb', device_type='usb_device')
-            return None if parent is None else (
-                parent if 'seat' in parent.tags else get_parent_hub(parent))
+            return None if is_root_hub(parent) else (
+                SeatHubDevice(parent) if 'seat' in parent.tags
+                else get_parent_hub(parent)
+            )
 
         super().__init__(device)
-        self.parent = SeatHubDevice(get_parent_hub(device))
+
+        # Only real USB hubs are allowed here!
+        self.parent = get_parent_hub(device)
+
+    def attach_to_seat(self, seat_name):
+        if self.parent:
+            # If input device is connected to a USB hub,
+            # attach the hub to the seat instead, so that
+            # all other devices connected to the same hub
+            # will be automatically attached to the same seat.
+            self.parent.attach_to_seat(seat_name)
+        else:
+            super().attach_to_seat(seat_name)
 
 
 class SeatKMSVideoDevice(SeatDevice):
     def __init__(self, fb, drm):
         super().__init__(fb)
         self.drm = [SeatDevice(d) for d in drm]
+
+    def attach_to_seat(self, seat_name):
+        # Attach the framebuffer device node
+        super().attach_to_seat(seat_name)
+
+        for node in self.drm:
+            # Attach all other DRM device nodes as well
+            node.attach_to_seat(seat_name)
 
 
 class SeatSM501VideoDevice(SeatNodelessDevice):
@@ -240,12 +281,16 @@ def main():
     for device in keyboard_devices:
         logger.info('Keyboard detected: %s -> %s',
                     device.device_node, device.sys_path)
-        logger.info('>>> Parent device: %s', device.parent.sys_path)
+
+        if device.parent:
+            logger.info('>>> Parent device: %s', device.parent.sys_path)
 
     for device in mouse_devices:
         logger.info('Mouse detected: %s -> %s',
                     device.device_node, device.sys_path)
-        logger.info('>>> Parent device: %s', device.parent.sys_path)
+
+        if device.parent:
+            logger.info('>>> Parent device: %s', device.parent.sys_path)
 
     for device in kms_video_devices:
         logger.info('KMS video detected: %s -> %s',
