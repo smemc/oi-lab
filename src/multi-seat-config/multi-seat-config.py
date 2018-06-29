@@ -56,88 +56,10 @@ def find_root_visual(screen):
                 return v
 
 
-class SeatNodelessDevice:
-    def __init__(self, device):
-        self.device_path = device.device_path
-        self.sys_path = device.sys_path
-        self.sys_name = device.sys_name
-        self.seat_name = device.get('ID_SEAT')
-
-    def attach_to_seat(self, seat_name):
-        try:
-            logind.AttachDevice(seat_name, self.sys_path)
-        except Exception as error:
-            logger.error('Failed to attach device %s to seat %s!',
-                         self.sys_path, seat_name)
-            logger.error(error)
-
-
-class SeatDevice(SeatNodelessDevice):
-    def __init__(self, device):
-        super().__init__(device)
-        self.device_node = device.device_node
-
-
-class SeatHubDevice(SeatNodelessDevice):
-    def __init__(self, device):
-        super().__init__(device)
-        self.product_id = device.attributes.asstring('idProduct')
-        self.vendor_id = device.attributes.asstring('idVendor')
-
-
-class SeatInputDevice(SeatDevice):
-    def __init__(self, device):
-        def is_root_hub(device):
-            # all root hubs have the same manufacturer 1d6b (Linux Foundation)
-            return device.attributes.asstring('idVendor') == '1d6b'
-
-        def get_parent_hub(device):
-            parent = device.find_parent('usb', device_type='usb_device')
-            return None if is_root_hub(parent) else (
-                SeatHubDevice(parent) if 'seat' in parent.tags
-                else get_parent_hub(parent)
-            )
-
-        super().__init__(device)
-
-        # Only real USB hubs are allowed here!
-        self.parent = get_parent_hub(device)
-
-    def attach_to_seat(self, seat_name):
-        if self.parent:
-            # If input device is connected to a USB hub,
-            # attach the hub to the seat instead, so that
-            # all other devices connected to the same hub
-            # will be automatically attached to the same seat.
-            self.parent.attach_to_seat(seat_name)
-        else:
-            super().attach_to_seat(seat_name)
-
-
-class SeatKMSVideoDevice(SeatDevice):
-    def __init__(self, fb, drm):
-        super().__init__(fb)
-        self.drm = [SeatDevice(d) for d in drm]
-
-    def attach_to_seat(self, seat_name):
-        # Attach the framebuffer device node
-        super().attach_to_seat(seat_name)
-
-        for node in self.drm:
-            # Attach all other DRM device nodes as well
-            node.attach_to_seat(seat_name)
-
-
-class SeatSM501VideoDevice(SeatNodelessDevice):
-    def __init__(self, device):
-        super().__init__(device)
-        self.output = device.device.get('SM501_OUTPUT')
-
-
 class Window:
-    def __init__(self, connection, geometry=None):
-        self.connection = connection
-        self.id = connection.generate_id()
+    def __init__(self, display_name, geometry=None):
+        self.connection = xcffib.connect(display=display_name)
+        self.id = self.connection.generate_id()
 
         screen = self.connection.get_setup().roots[self.connection.pref_screen]
 
@@ -152,7 +74,7 @@ class Window:
             self.height = screen.height_in_pixels
 
             # Get window geometry from RandR output name
-            xrandr = connection(xcffib.randr.key)
+            xrandr = self.connection(xcffib.randr.key)
             screen_resources = xrandr.GetScreenResources(screen.root).reply()
 
             for output in screen_resources.outputs:
@@ -245,6 +167,88 @@ class Window:
         self.connection.flush()
 
 
+class SeatNodelessDevice:
+    def __init__(self, device):
+        self.device_path = device.device_path
+        self.sys_path = device.sys_path
+        self.sys_name = device.sys_name
+        self.seat_name = device.get('ID_SEAT')
+
+    def attach_to_seat(self, seat_name):
+        try:
+            logind.AttachDevice(seat_name, self.sys_path)
+            logger.info('Device %s successfully attached to seat %s',
+                        self.sys_path, seat_name)
+        except Exception as error:
+            logger.error('Failed to attach device %s to seat %s!',
+                         self.sys_path, seat_name)
+            logger.error(error)
+
+
+class SeatDevice(SeatNodelessDevice):
+    def __init__(self, device):
+        super().__init__(device)
+        self.device_node = device.device_node
+
+
+class SeatHubDevice(SeatNodelessDevice):
+    def __init__(self, device):
+        super().__init__(device)
+        self.product_id = device.attributes.asstring('idProduct')
+        self.vendor_id = device.attributes.asstring('idVendor')
+
+
+class SeatInputDevice(SeatDevice):
+    def __init__(self, device):
+        def is_root_hub(device):
+            # all root hubs have the same manufacturer 1d6b (Linux Foundation)
+            return device.attributes.asstring('idVendor') == '1d6b'
+
+        def get_parent_hub(device):
+            parent = device.find_parent('usb', device_type='usb_device')
+            return None if is_root_hub(parent) else (
+                SeatHubDevice(parent) if 'seat' in parent.tags
+                else get_parent_hub(parent)
+            )
+
+        super().__init__(device)
+
+        # Only real USB hubs are allowed here!
+        self.parent = get_parent_hub(device)
+
+    def attach_to_seat(self, seat_name):
+        if self.parent:
+            # If input device is connected to a USB hub,
+            # attach the hub to the seat instead, so that
+            # all other devices connected to the same hub
+            # will be automatically attached to the same seat.
+            self.parent.attach_to_seat(seat_name)
+        else:
+            super().attach_to_seat(seat_name)
+
+
+class SeatKMSVideoDevice(SeatDevice):
+    def __init__(self, fb, drm, display_number):
+        super().__init__(fb)
+        self.drm = [SeatDevice(d) for d in drm]
+        self.window = Window(':{}'.format(display_number))
+
+    def attach_to_seat(self, seat_name):
+        # Attach the framebuffer device node
+        super().attach_to_seat(seat_name)
+
+        for node in self.drm:
+            # Attach all other DRM device nodes as well
+            node.attach_to_seat(seat_name)
+
+
+class SeatSM501VideoDevice(SeatNodelessDevice):
+    def __init__(self, device, display_number):
+        super().__init__(device)
+        self.window = Window(':{}'.format(display_number),
+                             device.device.get('SM501_OUTPUT'))
+
+
 def scan_keyboard_devices(context):
     devices = context.list_devices(subsystem='input', ID_INPUT_KEYBOARD=True)
     return [SeatInputDevice(device) for device in devices if device.device_node]
@@ -257,26 +261,26 @@ def scan_mouse_devices(context):
     return [SeatInputDevice(device) for device in devices if device.device_node]
 
 
-def scan_kms_video_devices(context):
+def scan_kms_video_devices(context, display_number):
     drms = context.list_devices(subsystem='drm')
     fbs = context.list_devices(subsystem='graphics')
     devices = [(fb, [drm for drm in drms
                      if drm.parent == fb.parent and drm.device_node])
                for fb in fbs if fb.device_node]
-    return [SeatKMSVideoDevice(*device) for device in devices]
+    return [SeatKMSVideoDevice(*device, display_number) for device in devices]
 
 
-def scan_sm501_video_devices(context):
+def scan_sm501_video_devices(context, display_number):
     devices = context.list_devices(subsystem='platform', tag='master-of-seat')
-    return [SeatSM501VideoDevice(device) for device in devices]
+    return [SeatSM501VideoDevice(device, display_number) for device in devices]
 
 
 def main():
     context = pyudev.Context()
     keyboard_devices = scan_keyboard_devices(context)
     mouse_devices = scan_mouse_devices(context)
-    kms_video_devices = scan_kms_video_devices(context)
-    sm501_video_devices = scan_sm501_video_devices(context)
+    kms_video_devices = scan_kms_video_devices(context, 10)
+    sm501_video_devices = scan_sm501_video_devices(context, 90)
 
     for device in keyboard_devices:
         logger.info('Keyboard detected: %s -> %s',
@@ -303,22 +307,22 @@ def main():
     for device in sm501_video_devices:
         logger.info('SM501 video detected: %s', device.sys_path)
 
-    windows = []
+    video_devices = kms_video_devices + sm501_video_devices
 
-    for arg in argv[1:]:
-        (display_name, *geometries) = arg.split(',')
+    # for arg in argv[1:]:
+    #    (display_name, *geometries) = arg.split(',')
 
-        if len(geometries) == 0:
-            geometries = [None]
+    #    if len(geometries) == 0:
+    #        geometries = [None]
 
-        windows.extend([Window(xcffib.connect(display=display_name), geometry)
-                        for geometry in geometries])
+    #    windows.extend([Window(xcffib.connect(display=display_name), geometry)
+    #                    for geometry in geometries])
 
-    for (index, window) in enumerate(windows):
-        window.set_wm_name('w{}'.format(index + 1))
-        window.load_image('wait-loading.png')
+    for (index, video_device) in enumerate(video_devices):
+        video_device.window.set_wm_name('w{}'.format(index + 1))
+        video_device.window.load_image('wait-loading.png')
 
-    num_seats = len(windows)
+    num_seats = len(video_devices)
 
     # Put this in a list, so it can be used globally in coroutines
     available_keyboards = [len(keyboard_devices)]
@@ -327,12 +331,13 @@ def main():
         [None]*(MAX_SEAT_COUNT - num_seats)
 
     def refresh_screens(loop):
-        for (index, window) in enumerate(windows):
+        for (index, video_device) in enumerate(video_devices):
             status = ''.join(str(int(bool(is_configured)))
                              for is_configured in configured_seats)
             remaining_seats = configured_seats.count(False)
-            window.load_image('seat{}-{}.png'.format(index + 1, status))
-            window.write_message(
+            video_device.window.load_image(
+                'seat{}-{}.png'.format(index + 1, status))
+            video_device.window.write_message(
                 'Terminais restantes: {}        Teclados disponíveis: {}'
                 .format(remaining_seats, available_keyboards[0])
             )
@@ -341,24 +346,28 @@ def main():
                 loop.stop()
 
     # EV_KEY event values: 0 (release), 1 (press), or 2 (hold)
-    async def read_key(device):
+    async def read_key(keyboard):
+        device = InputDevice(keyboard.device_node)
+
         async for event in device.async_read_loop():
             # pylint: disable=no-member
             if event.type == ecodes.EV_KEY and event.value == 1:
                 key = event.code - ecodes.KEY_F1
                 return key
 
-    async def read_all_keys(loop, device):
+    async def read_all_keys(loop, keyboard):
         new_key_pressed = False
         refresh_screens(loop)
 
         while not new_key_pressed:
-            key = await read_key(device)
+            key = await read_key(keyboard)
             new_key_pressed = (configured_seats[key] == False)
 
         if (key >= 0 and key <= 3):
             logger.info('Key F{} pressed on keyboard {}'
-                        .format(key + 1, device.fn))
+                        .format(key + 1, keyboard.device_node))
+            video_devices[key].attach_to_seat('seat-{}'.format(key + 1))
+            keyboard.attach_to_seat('seat-{}'.format(key + 1))
             configured_seats[key] = True
             available_keyboards[0] -= 1
             refresh_screens(loop)
@@ -367,9 +376,8 @@ def main():
 
     if num_seats > 1 and available_keyboards[0] > 1:
         loop = asyncio.get_event_loop()
-        keybds = [InputDevice(device.device_node)
-                  for device in keyboard_devices]
-        coroutines = (read_all_keys(loop, keybd) for keybd in keybds)
+        coroutines = (read_all_keys(loop, keyboard)
+                      for keyboard in keyboard_devices)
         future = asyncio.gather(*coroutines)
 
         try:
