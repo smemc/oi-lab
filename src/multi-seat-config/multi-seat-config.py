@@ -42,6 +42,10 @@ logger.addHandler(stdout_handler)
 logger.addHandler(JournalHandler())
 
 
+def pci2display(pci_slot):
+    return int(re.sub(r'\.|:', '', pci_slot), base=16)
+
+
 def parse_geometry(geometry):
     regex = '([0-9]+)x([0-9]+)(?:\\+([0-9]+)(?:\\+([0-9]+))?)?'
     match = re.match(regex, geometry).groups()
@@ -57,8 +61,8 @@ def find_root_visual(screen):
 
 
 class Window:
-    def __init__(self, display_name, geometry=None):
-        self.connection = xcffib.connect(display=display_name)
+    def __init__(self, display_number, geometry=None):
+        self.connection = xcffib.connect(display=':{}'.format(display_number))
         self.id = self.connection.generate_id()
 
         screen = self.connection.get_setup().roots[self.connection.pref_screen]
@@ -172,6 +176,7 @@ class SeatNodelessDevice:
         self.device_path = device.device_path
         self.sys_path = device.sys_path
         self.sys_name = device.sys_name
+        self.pci_slot = device.find_parent('pci').properties['PCI_SLOT_NAME']
         self.seat_name = device.get('ID_SEAT')
 
     def attach_to_seat(self, seat_name):
@@ -228,10 +233,12 @@ class SeatInputDevice(SeatDevice):
 
 
 class SeatKMSVideoDevice(SeatDevice):
-    def __init__(self, fb, drm, display_number):
+    def __init__(self, fb, drm):
+        display_number = pci2display(self.pci_slot)
+
         super().__init__(fb)
         self.drm = [SeatDevice(d) for d in drm]
-        self.window = Window(':{}'.format(display_number))
+        self.window = Window(display_number)
 
     def attach_to_seat(self, seat_name):
         # Attach the framebuffer device node
@@ -243,9 +250,11 @@ class SeatKMSVideoDevice(SeatDevice):
 
 
 class SeatSM501VideoDevice(SeatNodelessDevice):
-    def __init__(self, device, display_number):
+    def __init__(self, device):
+        display_number = pci2display(self.pci_slot)
+
         super().__init__(device)
-        self.window = Window(':{}'.format(display_number),
+        self.window = Window(display_number,
                              device.device.get('SM501_OUTPUT'))
 
 
@@ -261,26 +270,26 @@ def scan_mouse_devices(context):
     return [SeatInputDevice(device) for device in devices if device.device_node]
 
 
-def scan_kms_video_devices(context, display_number):
+def scan_kms_video_devices(context):
     drms = context.list_devices(subsystem='drm')
     fbs = context.list_devices(subsystem='graphics')
     devices = [(fb, [drm for drm in drms
                      if drm.parent == fb.parent and drm.device_node])
                for fb in fbs if fb.device_node]
-    return [SeatKMSVideoDevice(*device, display_number) for device in devices]
+    return [SeatKMSVideoDevice(*device) for device in devices]
 
 
-def scan_sm501_video_devices(context, display_number):
+def scan_sm501_video_devices(context):
     devices = context.list_devices(subsystem='platform', tag='master-of-seat')
-    return [SeatSM501VideoDevice(device, display_number) for device in devices]
+    return [SeatSM501VideoDevice(device) for device in devices]
 
 
 def main():
     context = pyudev.Context()
     keyboard_devices = scan_keyboard_devices(context)
     mouse_devices = scan_mouse_devices(context)
-    kms_video_devices = scan_kms_video_devices(context, 10)
-    sm501_video_devices = scan_sm501_video_devices(context, 90)
+    kms_video_devices = scan_kms_video_devices(context)
+    sm501_video_devices = scan_sm501_video_devices(context)
 
     for device in keyboard_devices:
         logger.info('Keyboard detected: %s -> %s',
