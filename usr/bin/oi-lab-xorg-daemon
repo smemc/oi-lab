@@ -1,5 +1,15 @@
-#!/bin/sh
-index="${1}"
-display=":$(( 90 + index ))"
+#!/bin/bash
+
+pci_format () {
+    echo ${1//[.:]/${2}}
+}
+
+pci2display () {
+    echo $(( 16#$(pci_format ${1}) ))
+}
+
+address=${1}
 shift
-exec Xorg ${display} "${@}" -seat __fake-seat-sm501-${index}__ -dpms -s 0 -nocursor
+display=:$(pci2display ${address})
+seat_name=__fake-seat-sm501-$(pci_format ${address} -)__
+exec Xorg ${display} "${@}" -configdir /run/X11/xorg.conf.d -seat ${seat_name} -dpms -s 0 -nocursor

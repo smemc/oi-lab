@@ -3,18 +3,21 @@
 # Updates BusID entries in passed xorg.conf files according to a given
 # pattern to be searched in 'lspci' output.
 #
-# Usage: oi-lab-update-xorg-conf INDEX PATTERN XORGCONF_IN
+# Usage: oi-lab-update-xorg-conf PCI-ADDRESS XORGCONF_IN
 ###########################################################################
-index="${1}"
-pattern="${2}"
-xorgconf_in="${3}"
-xorgconf="$(basename ${3%.in})"
-rundir=/etc/X11/xorg.conf.d
+pci_format () {
+    echo ${1//[.:]/${2}}
+}
+
+address=${1}
+xorgconf_in=${2}
+xorgconf=$(basename ${2%.in})
+seat_address=$(pci_format ${address} -)
+xorg_address=$(pci_format ${address} :)
+rundir=/run/X11/xorg.conf.d
 [ -d ${rundir} ] || mkdir -p ${rundir}
 
-# Returns (index + 1)-th line, 1st column, of filtered lspci output
-address=$(lspci | grep "${pattern}" | sed "$((index + 1))q;d" | cut -d' ' -f1)
-
-sed -e "s/[0-9]\+:[0-9]\+:[0-9]\+/${address//./:}/" \
-    -e "s/@INDEX@/${index}/g" \
-    ${xorgconf_in} > ${rundir}/${xorgconf/xx/${index}}
+sed \
+-e "s/[0-9]\+:[0-9]\+:[0-9]\+/${xorg_address}/" \
+-e "s/@PCI_ADDRESS@/${seat_address}/g" \
+${xorgconf_in} > ${rundir}/${xorgconf/xx/${seat_address}}
