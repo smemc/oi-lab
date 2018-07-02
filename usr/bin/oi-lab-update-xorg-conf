@@ -10,8 +10,8 @@ pci_format () {
 }
 
 address=${1}
-xorgconf_in=${2}
-xorgconf=$(basename ${2%.in})
+xorgconf_stub=${2}
+xorgconf=$(basename ${xorgconf_stub%.in})
 seat_address=$(pci_format ${address} -)
 xorg_address=$(pci_format ${address} :)
 rundir=/run/X11/xorg.conf.d
@@ -19,5 +19,5 @@ rundir=/run/X11/xorg.conf.d
 
 sed \
 -e "s/[0-9]\+:[0-9]\+:[0-9]\+/${xorg_address}/" \
--e "s/@PCI_ADDRESS@/${seat_address}/g" \
+-e "s/@SM501_PCI_ADDRESS@/${seat_address}/g" \
 ${xorgconf_in} > ${rundir}/${xorgconf/xx/${seat_address}}

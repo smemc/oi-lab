@@ -5,11 +5,11 @@ pci_format () {
 }
 
 pci2display () {
-    echo $(( 16#$(pci_format ${1}) ))
+    echo :$(( 16#$(pci_format ${1}) ))
 }
 
 address=${1}
 shift
-display=:$(pci2display ${address})
+display=$(pci2display ${address})
 seat_name=__fake-seat-sm501-$(pci_format ${address} -)__
 exec Xorg ${display} "${@}" -configdir /run/X11/xorg.conf.d -seat ${seat_name} -dpms -s 0 -nocursor

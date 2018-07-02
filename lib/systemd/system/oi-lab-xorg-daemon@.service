@@ -2,7 +2,7 @@
 Description=Service for Xorg server for SM501 video card %i
 
 [Service]
-ExecStartPre=/usr/bin/oi-lab-update-xorg-conf %i Silicon.Motion /usr/share/X11/xorg.conf.d/21-oi-lab-sm501-xx.conf.in
+ExecStartPre=/usr/bin/oi-lab-update-xorg-conf %i /usr/share/X11/xorg.conf.d/21-oi-lab-sm501-xx.conf.in
 ExecStart=/usr/bin/oi-lab-xorg-daemon %i
 ExecStopPost=/bin/rm /run/X11/xorg.conf.d/21-oi-lab-sm501-%i.conf
 SuccessExitStatus=0 1
