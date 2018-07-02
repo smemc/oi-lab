@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import shutil
 from sys import argv, stdout
 
 # Logging modules
@@ -251,11 +252,30 @@ class SeatKMSVideoDevice(SeatDevice):
 
 class SeatSM501VideoDevice(SeatNodelessDevice):
     def __init__(self, device):
-        display_number = pci2display(self.pci_slot)
-
         super().__init__(device)
-        self.window = Window(display_number,
-                             device.device.get('SM501_OUTPUT'))
+        self.display_number = pci2display(self.pci_slot)
+        self.output = device.device.get('SM501_OUTPUT')
+        self.window = Window(self.display_number,
+                             self.output)
+
+    def attach_to_seat(self, seat_name):
+        stub_file = '/usr/share/X11/xorg.conf.d/22-oi-lab-nested.conf.in'
+        new_file = '/etc/X11/xorg.conf.d/22-oi-lab-nested-{}.conf'.format(
+            seat_name
+        )
+        super().attach_to_seat(seat_name)
+        shutil.copy(stub_file, new_file)
+
+        with open(new_file, 'r') as config_file:
+            file_data = config_file.read()
+
+        file_data.replace('@NESTED_SEAT_NAME@', seat_name)
+        file_data.replace('@NESTED_PCI_SLOT@', self.pci_slot)
+        file_data.replace('@NESTED_DISPLAY_NUMBER@', self.display_number)
+        file_data.replace('@NESTED_OUTPUT@', self.output)
+
+        with open(new_file, 'w') as config_file:
+            config_file.write(file_data)
 
 
 def scan_keyboard_devices(context):
