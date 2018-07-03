@@ -270,7 +270,7 @@ class SeatSM501VideoDevice(SeatNodelessDevice):
             old_config_data = config_file.read()
             new_config_data = """Section "Device"
     MatchSeat "__fake-seat-{display_number}__"
-    Identifier "Silicon Motion SM501 Video Card {seat_address}"
+    Identifier "Silicon Motion SM501 Video Card {pci_slot}"
     BusID "PCI:{xorg_address}"
     Driver "siliconmotion"
     Option "PanelSize" "1360x768"
@@ -280,19 +280,18 @@ class SeatSM501VideoDevice(SeatNodelessDevice):
 EndSection
 
 Section "Screen"
-    MatchSeat "__fake-seat-{seat_address}__"
-    Identifier "Silicon Motion SM501 Screen {seat_address}"
-    Device "Silicon Motion SM501 Video Card {seat_address}"
+    MatchSeat "__fake-seat-{display_number}__"
+    Identifier "Silicon Motion SM501 Screen {pci_slot}"
+    Device "Silicon Motion SM501 Video Card {pci_slot}"
     DefaultDepth 16
 EndSection""".format(display_number=self.display_number,
-                     seat_address=seat_address,
+                     pci_slot=self.pci_slot,
                      xorg_address=xorg_address)
 
             if new_config_data != old_config_data:
                 config_file.write(new_config_data)
 
-        self.window = Window(self.display_number,
-                             self.output)
+        self.window = Window(self.display_number, self.output)
 
     def attach_to_seat(self, seat_name):
         super().attach_to_seat(seat_name)
