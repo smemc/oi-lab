@@ -11,5 +11,5 @@ pci2display () {
 address=${1}
 shift
 display=$(pci2display ${address})
-seat_name=__fake-seat-sm501-$(pci_format ${address} -)__
-exec Xorg ${display} "${@}" -configdir /run/X11/xorg.conf.d -seat ${seat_name} -dpms -s 0 -nocursor
+seat_name=__fake-seat-$(pci_format ${address} -)__
+exec Xorg ${display} "${@}" -seat ${seat_name} -dpms -s 0 -nocursor -noreset

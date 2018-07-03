@@ -259,23 +259,34 @@ class SeatSM501VideoDevice(SeatNodelessDevice):
                              self.output)
 
     def attach_to_seat(self, seat_name):
-        stub_file = '/usr/share/X11/xorg.conf.d/22-oi-lab-nested.conf.in'
-        new_file = '/etc/X11/xorg.conf.d/22-oi-lab-nested-{}.conf'.format(
+        super().attach_to_seat(seat_name)
+
+        config_file_path = '/etc/X11/xorg.conf.d/22-oi-lab-nested-{}.conf'.format(
             seat_name
         )
-        super().attach_to_seat(seat_name)
-        shutil.copy(stub_file, new_file)
 
-        with open(new_file, 'r') as config_file:
-            file_data = config_file.read()
+        with open(config_file_path, 'r+') as config_file:
+            old_config_data = config_file.read()
+            new_config_data = """Section "Device"
+    MatchSeat "{seat_name}"
+    Identifier "Nested Device {pci_slot}"
+    Driver "nested"
+    Option "Display" ":{display_number}"
+EndSection
 
-        file_data.replace('@NESTED_SEAT_NAME@', seat_name)
-        file_data.replace('@NESTED_PCI_SLOT@', self.pci_slot)
-        file_data.replace('@NESTED_DISPLAY_NUMBER@', self.display_number)
-        file_data.replace('@NESTED_OUTPUT@', self.output)
+Section "Screen"
+    MatchSeat "{seat_name}"
+    Identifier "Nested Screen {output} {pci_slot}"
+    Device "Nested Device {pci_slot}"
+    DefaultDepth 16
+    Option "Output" "{output}"
+EndSection""".format(seat_name=self.seat_name,
+                     pci_slot=self.pci_slot,
+                     display_number=self.display_number,
+                     output=self.output)
 
-        with open(new_file, 'w') as config_file:
-            config_file.write(file_data)
+            if new_config_data != old_config_data:
+                config_file.write(new_config_data)
 
 
 def scan_keyboard_devices(context):
