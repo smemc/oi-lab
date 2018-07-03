@@ -26,6 +26,7 @@ from pydbus import SystemBus
 from time import (sleep, time)
 
 MAX_SEAT_COUNT = 4
+XORG_CONF_DIR = '/etc/X11/xorg.conf.d'
 
 bus = SystemBus()
 logind = bus.get('.login1')
@@ -43,8 +44,12 @@ logger.addHandler(stdout_handler)
 logger.addHandler(JournalHandler())
 
 
+def pci_format(pci_slot, delimiter=''):
+    return re.sub(r'\.|:', delimiter, pci_slot)
+
+
 def pci2display(pci_slot):
-    return int(re.sub(r'\.|:', '', pci_slot), base=16)
+    return int(pci_format(pci_slot), base=16)
 
 
 def parse_geometry(geometry):
@@ -255,15 +260,45 @@ class SeatSM501VideoDevice(SeatNodelessDevice):
         super().__init__(device)
         self.display_number = pci2display(self.pci_slot)
         self.output = device.device.get('SM501_OUTPUT')
+
+        seat_address = pci_format(self.pci_slot, '-')
+        xorg_address = pci_format(self.pci_slot, ':')
+        config_file_path = '{}/21-oi-lab-sm501-{}.conf'.format(XORG_CONF_DIR,
+                                                               seat_address)
+
+        with open(config_file_path, 'r+') as config_file:
+            old_config_data = config_file.read()
+            new_config_data = """Section "Device"
+    MatchSeat "__fake-seat-{display_number}__"
+    Identifier "Silicon Motion SM501 Video Card {seat_address}"
+    BusID "PCI:{xorg_address}"
+    Driver "siliconmotion"
+    Option "PanelSize" "1360x768"
+    Option "Dualhead" "true"
+    Option "monitor-LVDS" "Left Monitor"
+    Option "monitor-VGA" "Right Monitor"
+EndSection
+
+Section "Screen"
+    MatchSeat "__fake-seat-{seat_address}__"
+    Identifier "Silicon Motion SM501 Screen {seat_address}"
+    Device "Silicon Motion SM501 Video Card {seat_address}"
+    DefaultDepth 16
+EndSection""".format(display_number=self.display_number,
+                     seat_address=seat_address,
+                     xorg_address=xorg_address)
+
+            if new_config_data != old_config_data:
+                config_file.write(new_config_data)
+
         self.window = Window(self.display_number,
                              self.output)
 
     def attach_to_seat(self, seat_name):
         super().attach_to_seat(seat_name)
 
-        config_file_path = '/etc/X11/xorg.conf.d/22-oi-lab-nested-{}.conf'.format(
-            seat_name
-        )
+        config_file_path = '{}/22-oi-lab-nested-{}.conf'.format(XORG_CONF_DIR,
+                                                                seat_name)
 
         with open(config_file_path, 'r+') as config_file:
             old_config_data = config_file.read()

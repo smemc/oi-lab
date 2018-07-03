@@ -1,8 +1,8 @@
 [Unit]
-Description=Socket for Xorg server for SM501 card %i
+Description=Socket for Xorg server :%i
 
 [Socket]
-ListenStream=/tmp/.X11-unix/X9%i
+ListenStream=/tmp/.X11-unix/X%i
 
 [Install]
 WantedBy=sockets.target

@@ -1,7 +1,6 @@
 [Unit]
-Description=Service for Xorg server for SM501 video card %i
+Description=Service for Xorg server :%i
 
 [Service]
-ExecStartPre=/usr/bin/oi-lab-update-xorg-conf %i
-ExecStart=/usr/bin/oi-lab-xorg-daemon %i
+ExecStart=/usr/bin/Xorg :%i -seat __fake-seat-%i__ -dpms -s 0 -nocursor -noreset
 SuccessExitStatus=0 1
