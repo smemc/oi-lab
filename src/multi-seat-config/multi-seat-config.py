@@ -344,7 +344,7 @@ Section "Screen"
     DefaultDepth 16
     Option "Output" "{output}"
 EndSection
-""".format(seat_name=self.seat_name,
+""".format(seat_name=seat_name,
            pci_slot=self.pci_slot,
            display_number=self.display_number,
            output=self.output)
