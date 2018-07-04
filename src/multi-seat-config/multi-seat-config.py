@@ -42,11 +42,9 @@ logger = logging.getLogger(argv[0])
 logger.setLevel(logging.INFO)
 logger.propagate = False
 stdout_handler = logging.StreamHandler(stdout)
-stdout_handler.setFormatter(
-    logging.Formatter(
-        '%(asctime)s %(name)s[%(process)s] %(levelname)s %(message)s'
-    )
-)
+formatter = logging.Formatter(
+    '%(asctime)s %(name)s[%(process)s] %(levelname)s %(message)s')
+stdout_handler.setFormatter(formatter)
 logger.addHandler(stdout_handler)
 logger.addHandler(JournalHandler())
 
@@ -123,9 +121,8 @@ class Window:
 
                     if crtc != xcffib.NONE:
                         # Output is enabled! Get its CRTC geometry
-                        crtc_info = xrandr.GetCrtcInfo(
-                            crtc, int(time())
-                        ).reply()
+                        crtc_info = xrandr.GetCrtcInfo(crtc,
+                                                       int(time())).reply()
                         self.x = crtc_info.x
                         self.y = crtc_info.y
                         self.width = crtc_info.width
@@ -147,21 +144,13 @@ class Window:
         # Show window
         self.connection.core.MapWindow(self.id)
 
-        # Force window placement after MapWindow() call,
-        # in order to prevent window position
-        # from being eventually overriden by WM.
-        # self.connection.core.ConfigureWindow(self.id,
-        #                                     ConfigWindow.X | ConfigWindow.Y,
-        #                                     [self.x, self.y])
-
         # Set Cairo surface and context
-        self.context = cairocffi.Context(
-            cairocffi.XCBSurface(self.connection,
-                                 self.id,
-                                 find_root_visual(screen),
-                                 self.width,
-                                 self.height)
-        )
+        xcb_surface = cairocffi.XCBSurface(self.connection,
+                                           self.id,
+                                           find_root_visual(screen),
+                                           self.width,
+                                           self.height)
+        self.context = cairocffi.Context(xcb_surface)
 
         self.connection.flush()
 
@@ -182,7 +171,7 @@ class Window:
         image_width = image_surface.get_width()
         image_height = image_surface.get_height()
 
-        self.context.set_source_rgb(0, 136/255, 170/255)
+        self.context.set_source_rgb(0, 0.533333333, 0.666666667)
         self.context.paint()
 
         self.context.set_source_surface(image_surface,
@@ -246,8 +235,7 @@ class SeatInputDevice(SeatDevice):
             parent = device.find_parent('usb', device_type='usb_device')
             return None if is_root_hub(parent) else (
                 SeatHubDevice(parent) if 'seat' in parent.tags
-                else get_parent_hub(parent)
-            )
+                else get_parent_hub(parent))
 
         super().__init__(device)
 
@@ -411,15 +399,6 @@ def main():
 
     video_devices = kms_video_devices + sm501_video_devices
 
-    # for arg in argv[1:]:
-    #    (display_name, *geometries) = arg.split(',')
-
-    #    if len(geometries) == 0:
-    #        geometries = [None]
-
-    #    windows.extend([Window(xcffib.connect(display=display_name), geometry)
-    #                    for geometry in geometries])
-
     for (index, video_device) in enumerate(video_devices):
         video_device.window.set_wm_name('w{}'.format(index + 1))
         video_device.window.load_image('wait-loading.png')
@@ -447,8 +426,7 @@ def main():
                 'seat{}-{}.png'.format(index, status))
             video_device.window.write_message(
                 'Terminais restantes: {}        Teclados disponíveis: {}'
-                .format(remaining_seats, available_keyboards[0])
-            )
+                .format(remaining_seats, available_keyboards[0]))
 
             if remaining_seats == 0:
                 loop.stop()
