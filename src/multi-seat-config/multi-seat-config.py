@@ -30,9 +30,13 @@ XORG_CONF_DIR = '/etc/X11/xorg.conf.d'
 LOGIND_PATH = 'org.freedesktop.login1'
 LOGIND_OBJECT = '/org/freedesktop/login1'
 LOGIND_INTERFACE = 'org.freedesktop.login1.Manager'
+SYSTEMD_PATH = 'org.freedesktop.systemd1'
+SYSTEMD_OBJECT = '/org/freedesktop/systemd1'
+SYSTEMD_INTERFACE = 'org.freedesktop.systemd1.Manager'
 
 bus = SystemBus()
 logind = bus.get_object(LOGIND_PATH, LOGIND_OBJECT)
+systemd = bus.get_object(SYSTEMD_PATH, SYSTEMD_OBJECT)
 
 logger = logging.getLogger(argv[0])
 logger.setLevel(logging.INFO)
@@ -85,6 +89,9 @@ def update_file(file_path, new_data):
 class Window:
     def __init__(self, display_number, geometry=None):
         logger.info('Connecting to X server :{}'.format(display_number))
+        systemd.StartUnit('oi-lab-xorg-daemon@{}.socket'.format(display_number),
+                          'replace',
+                          dbus_interface=SYSTEMD_INTERFACE)
         self.connection = xcffib.connect(display=':{}'.format(display_number))
         self.id = self.connection.generate_id()
 
