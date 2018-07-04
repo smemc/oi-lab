@@ -266,9 +266,7 @@ class SeatSM501VideoDevice(SeatNodelessDevice):
         config_file_path = '{}/21-oi-lab-sm501-{}.conf'.format(XORG_CONF_DIR,
                                                                seat_address)
 
-        with open(config_file_path, 'r+') as config_file:
-            old_config_data = config_file.read()
-            new_config_data = """Section "Device"
+        new_config_data = """Section "Device"
     MatchSeat "__fake-seat-{display_number}__"
     Identifier "Silicon Motion SM501 Video Card {pci_slot}"
     BusID "PCI:{xorg_address}"
@@ -288,7 +286,14 @@ EndSection""".format(display_number=self.display_number,
                      pci_slot=self.pci_slot,
                      xorg_address=xorg_address)
 
-            if new_config_data != old_config_data:
+        try:
+            with open(config_file_path, 'r+') as config_file:
+                old_config_data = config_file.read()
+
+                if new_config_data != old_config_data:
+                    config_file.write(new_config_data)
+        except FileNotFoundError:
+            with open(config_file_path, 'w+') as config_file:
                 config_file.write(new_config_data)
 
         self.window = Window(self.display_number, self.output)
@@ -299,9 +304,7 @@ EndSection""".format(display_number=self.display_number,
         config_file_path = '{}/22-oi-lab-nested-{}.conf'.format(XORG_CONF_DIR,
                                                                 seat_name)
 
-        with open(config_file_path, 'r+') as config_file:
-            old_config_data = config_file.read()
-            new_config_data = """Section "Device"
+        new_config_data = """Section "Device"
     MatchSeat "{seat_name}"
     Identifier "Nested Device {pci_slot}"
     Driver "nested"
@@ -318,8 +321,14 @@ EndSection""".format(seat_name=self.seat_name,
                      pci_slot=self.pci_slot,
                      display_number=self.display_number,
                      output=self.output)
+        try:
+            with open(config_file_path, 'r+') as config_file:
+                old_config_data = config_file.read()
 
-            if new_config_data != old_config_data:
+                if new_config_data != old_config_data:
+                    config_file.write(new_config_data)
+        except FileNotFoundError:
+            with open(config_file_path, 'w+') as config_file:
                 config_file.write(new_config_data)
 
 
