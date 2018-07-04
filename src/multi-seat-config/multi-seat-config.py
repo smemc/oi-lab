@@ -345,13 +345,16 @@ def scan_mouse_devices(context):
     return [SeatInputDevice(device) for device in devices if device.device_node]
 
 
-def scan_kms_video_devices(context):
+def scan_kms_video_devices(context, ignore_fb0=True):
     drms = context.list_devices(subsystem='drm')
     fbs = context.list_devices(subsystem='graphics')
     devices = [(fb, [drm for drm in drms
                      if drm.parent == fb.parent and drm.device_node])
                for fb in fbs if fb.device_node]
-    return [SeatKMSVideoDevice(*device) for device in devices]
+    return [SeatKMSVideoDevice(*device) for device in devices] \
+        if not ignore_fb0 \
+        else [SeatKMSVideoDevice(*device) for device in devices
+              if device.device_node != '/dev/fb0']
 
 
 def scan_sm501_video_devices(context):
@@ -413,9 +416,6 @@ def main():
 
     configured_seats = [False]*min(MAX_SEAT_COUNT, num_seats) + \
         [None] * (MAX_SEAT_COUNT - num_seats)
-
-    # seat0 is already configured by default
-    configured_seats[0] = True
 
     def refresh_screens(loop):
         for (index, video_device) in enumerate(video_devices):
