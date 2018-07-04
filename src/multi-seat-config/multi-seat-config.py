@@ -420,7 +420,7 @@ def main():
                              for is_configured in configured_seats)
             remaining_seats = configured_seats.count(False)
             video_device.window.load_image(
-                'seat{}-{}.png'.format(index + 1, status))
+                'seat{}-{}.png'.format(index, status))
             video_device.window.write_message(
                 'Terminais restantes: {}        Teclados disponíveis: {}'
                 .format(remaining_seats, available_keyboards[0])
