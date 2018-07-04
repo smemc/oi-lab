@@ -1,6 +1,14 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+# Dependencies for Ubuntu 18.04
+# - python3-cairocffi
+# - python3-evdev
+# - python3-pydbus
+# - python3-pyudev
+# - python3-systemd
+# - python3-xcffib
+
 import re
 import shutil
 from sys import argv, stdout
@@ -21,22 +29,16 @@ import pyudev
 from evdev import (InputDevice, ecodes)
 
 # DBus modules (for communication with systemd-logind)
-from dbus import SystemBus
+from pydbus import SystemBus
 
 from time import (sleep, time)
 
 MAX_SEAT_COUNT = 5
 XORG_CONF_DIR = '/etc/X11/xorg.conf.d'
-LOGIND_PATH = 'org.freedesktop.login1'
-LOGIND_OBJECT = '/org/freedesktop/login1'
-LOGIND_INTERFACE = 'org.freedesktop.login1.Manager'
-SYSTEMD_PATH = 'org.freedesktop.systemd1'
-SYSTEMD_OBJECT = '/org/freedesktop/systemd1'
-SYSTEMD_INTERFACE = 'org.freedesktop.systemd1.Manager'
 
 bus = SystemBus()
-logind = bus.get_object(LOGIND_PATH, LOGIND_OBJECT)
-systemd = bus.get_object(SYSTEMD_PATH, SYSTEMD_OBJECT)
+logind = bus.get('.login1')
+systemd = bus.get('.systemd1')
 
 logger = logging.getLogger(argv[0])
 logger.setLevel(logging.INFO)
@@ -86,12 +88,10 @@ def update_file(file_path, new_data):
 
 class Window:
     def __init__(self, display_number, geometry=None):
-        logger.info('Connecting to X server :{}'.format(display_number))
-        socket_unit = 'oi-lab-xorg-daemon@{}.socket'.format(display_number)
-        systemd.StartUnit(socket_unit,
-                          'replace',
-                          dbus_interface=SYSTEMD_INTERFACE)
-        self.connection = xcffib.connect(display=':{}'.format(display_number))
+        logger.info(f'Connecting to X server :{display_number}')
+        socket_unit = f'oi-lab-xorg-daemon@{display_number}.socket'
+        systemd.StartUnit(socket_unit, 'replace')
+        self.connection = xcffib.connect(display=':{display_number}')
         self.id = self.connection.generate_id()
 
         screen = self.connection.get_setup().roots[self.connection.pref_screen]
@@ -202,8 +202,7 @@ class SeatNodelessDevice:
 
     def attach_to_seat(self, seat_name):
         try:
-            logind.AttachDevice(seat_name, self.sys_path, False,
-                                dbus_interface=LOGIND_INTERFACE)
+            logind.AttachDevice(seat_name, self.sys_path, False)
             logger.info('Device %s successfully attached to seat %s',
                         self.sys_path, seat_name)
         except Exception as error:
@@ -277,12 +276,11 @@ class SeatSM501VideoDevice(SeatNodelessDevice):
 
         seat_address = pci_format(self.pci_slot, '-')
         xorg_address = pci_format(self.pci_slot, ':')
-        config_file_path = '{}/21-oi-lab-sm501-{}.conf'.format(XORG_CONF_DIR,
-                                                               seat_address)
+        config_file_path = f'{XORG_CONF_DIR}/21-oi-lab-sm501-{seat_address}.conf'
 
-        new_config_data = """Section "Device"
-    MatchSeat "__fake-seat-{display_number}__"
-    Identifier "Silicon Motion SM501 Video Card {pci_slot}"
+        new_config_data = f"""Section "Device"
+    MatchSeat "__fake-seat-{self.display_number}__"
+    Identifier "Silicon Motion SM501 Video Card {self.pci_slot}"
     BusID "PCI:{xorg_address}"
     Driver "siliconmotion"
     Option "PanelSize" "1360x768"
@@ -292,50 +290,39 @@ class SeatSM501VideoDevice(SeatNodelessDevice):
 EndSection
 
 Section "Screen"
-    MatchSeat "__fake-seat-{display_number}__"
-    Identifier "Silicon Motion SM501 Screen {pci_slot}"
-    Device "Silicon Motion SM501 Video Card {pci_slot}"
+    MatchSeat "__fake-seat-{self.display_number}__"
+    Identifier "Silicon Motion SM501 Screen {self.pci_slot}"
+    Device "Silicon Motion SM501 Video Card {self.pci_slot}"
     DefaultDepth 16
 EndSection
-""".format(display_number=self.display_number,
-           pci_slot=self.pci_slot,
-           xorg_address=xorg_address)
+"""
         update_file(config_file_path, new_config_data)
 
         # Enable permanently this socket unit, since it will be needed
         # even after multi-seat is configured.
-        socket_unit = 'oi-lab-xorg-daemon@{}.socket'.format(
-            self.display_number)
-        systemd.EnableUnitFiles([socket_unit],
-                                False, True,
-                                dbus_interface=SYSTEMD_INTERFACE)
+        socket_unit = f'oi-lab-xorg-daemon@{self.display_number}.socket'
+        systemd.EnableUnitFiles([socket_unit], False, True)
 
         self.window = Window(self.display_number, self.output)
 
     def attach_to_seat(self, seat_name):
         super().attach_to_seat(seat_name)
-
-        config_file_path = '{}/22-oi-lab-nested-{}.conf'.format(XORG_CONF_DIR,
-                                                                seat_name)
-
-        new_config_data = """Section "Device"
+        config_file_path = f'{XORG_CONF_DIR}/22-oi-lab-nested-{seat_name}.conf'
+        new_config_data = f"""Section "Device"
     MatchSeat "{seat_name}"
-    Identifier "Nested Device {pci_slot}"
+    Identifier "Nested Device {self.pci_slot}"
     Driver "nested"
-    Option "Display" ":{display_number}"
+    Option "Display" ":{self.display_number}"
 EndSection
 
 Section "Screen"
     MatchSeat "{seat_name}"
-    Identifier "Nested Screen {output} {pci_slot}"
-    Device "Nested Device {pci_slot}"
+    Identifier "Nested Screen {self.output} {self.pci_slot}"
+    Device "Nested Device {self.pci_slot}"
     DefaultDepth 16
-    Option "Output" "{output}"
+    Option "Output" "{self.output}"
 EndSection
-""".format(seat_name=seat_name,
-           pci_slot=self.pci_slot,
-           display_number=self.display_number,
-           output=self.output)
+"""
         update_file(config_file_path, new_config_data)
 
 
@@ -400,7 +387,7 @@ def main():
     video_devices = kms_video_devices + sm501_video_devices
 
     for (index, video_device) in enumerate(video_devices):
-        video_device.window.set_wm_name('w{}'.format(index + 1))
+        video_device.window.set_wm_name(f'w{index + 1}')
         video_device.window.load_image('wait-loading.png')
 
     # The total number of configrable seats is limited by
@@ -422,11 +409,9 @@ def main():
             status = ''.join(str(int(bool(is_configured)))
                              for is_configured in configured_seats[1:])
             remaining_seats = configured_seats.count(False)
-            video_device.window.load_image(
-                'seat{}-{}.png'.format(index, status))
+            video_device.window.load_image(f'seat{index}-{status}.png')
             video_device.window.write_message(
-                'Terminais restantes: {}        Teclados disponíveis: {}'
-                .format(remaining_seats, available_keyboards[0]))
+                f'Terminais restantes: {remaining_seats}        Teclados disponíveis: {available_keyboards[0]}')
 
             if remaining_seats == 0:
                 loop.stop()
@@ -450,10 +435,10 @@ def main():
             new_key_pressed = (configured_seats[key] == False)
 
         if (key >= 1 and key <= 4):
-            logger.info('Key F{} pressed on keyboard {}'
-                        .format(key, keyboard.device_node))
-            video_devices[key].attach_to_seat('seat-{}'.format(key))
-            keyboard.attach_to_seat('seat-{}'.format(key))
+            logger.info(
+                f'Key F{key} pressed on keyboard {keyboard.device_node}')
+            video_devices[key].attach_to_seat(f'seat-{key}')
+            keyboard.attach_to_seat(f'seat-{key}')
             configured_seats[key] = True
             available_keyboards[0] -= 1
             refresh_screens(loop)
