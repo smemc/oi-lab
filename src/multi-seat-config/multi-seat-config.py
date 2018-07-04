@@ -287,9 +287,10 @@ Section "Screen"
     Identifier "Silicon Motion SM501 Screen {pci_slot}"
     Device "Silicon Motion SM501 Video Card {pci_slot}"
     DefaultDepth 16
-EndSection""".format(display_number=self.display_number,
-                     pci_slot=self.pci_slot,
-                     xorg_address=xorg_address)
+EndSection
+""".format(display_number=self.display_number,
+           pci_slot=self.pci_slot,
+           xorg_address=xorg_address)
 
         try:
             with open(config_file_path, 'r+') as config_file:
@@ -297,6 +298,7 @@ EndSection""".format(display_number=self.display_number,
 
                 if new_config_data != old_config_data:
                     config_file.write(new_config_data)
+                    config_file.truncate()
         except FileNotFoundError:
             with open(config_file_path, 'w+') as config_file:
                 config_file.write(new_config_data)
@@ -322,16 +324,18 @@ Section "Screen"
     Device "Nested Device {pci_slot}"
     DefaultDepth 16
     Option "Output" "{output}"
-EndSection""".format(seat_name=self.seat_name,
-                     pci_slot=self.pci_slot,
-                     display_number=self.display_number,
-                     output=self.output)
+EndSection
+""".format(seat_name=self.seat_name,
+           pci_slot=self.pci_slot,
+           display_number=self.display_number,
+           output=self.output)
         try:
             with open(config_file_path, 'r+') as config_file:
                 old_config_data = config_file.read()
 
                 if new_config_data != old_config_data:
                     config_file.write(new_config_data)
+                    config_file.truncate()
         except FileNotFoundError:
             with open(config_file_path, 'w+') as config_file:
                 config_file.write(new_config_data)
