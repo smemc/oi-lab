@@ -413,8 +413,8 @@ def main():
 
     # seat0 is already configured by default
     configured_seats = [True] \
-        + [False]*(min(MAX_SEAT_COUNT, num_seats) - 1) \
-        + [None]*(MAX_SEAT_COUNT - num_seats)
+        + [False]*min(MAX_SEAT_COUNT, num_seats) \
+        + [None]*(MAX_SEAT_COUNT - num_seats - 1)
 
     def refresh_screens(loop):
         for (index, video_device) in enumerate(video_devices):
