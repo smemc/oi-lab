@@ -34,6 +34,7 @@ from time import (sleep, time)
 
 MAX_SEAT_COUNT = 5
 XORG_CONF_DIR = '/etc/X11/xorg.conf.d'
+SCREENS_DIR = '/usr/share/oi-lab-multi-seat-config/screens'
 LOGIND_PATH = 'org.freedesktop.login1'
 LOGIND_OBJECT = '/org/freedesktop/login1'
 LOGIND_INTERFACE = 'org.freedesktop.login1.Manager'
@@ -408,7 +409,8 @@ def main():
 
     for (index, video_device) in enumerate(video_devices):
         video_device.window.set_wm_name('w{}'.format(index + 1))
-        video_device.window.load_image('wait-loading.png')
+        video_device.window.load_image(
+            '{}/wait-loading.png'.format(SCREENS_DIR))
 
     # The total number of configrable seats is limited by
     # the availability of video and keyboard devices.
@@ -430,7 +432,7 @@ def main():
                              for is_configured in configured_seats[1:])
             remaining_seats = configured_seats.count(False)
             video_device.window.load_image(
-                'seat{}-{}.png'.format(index, status))
+                '{}/seat{}-{}.png'.format(SCREENS_DIR, index, status))
             video_device.window.write_message(
                 'Terminais restantes: {}        Teclados disponíveis: {}'
                 .format(remaining_seats, available_keyboards[0]))

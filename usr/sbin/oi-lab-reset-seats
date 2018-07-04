@@ -1,3 +1,4 @@
 #!/bin/sh
 loginctl flush-devices
+rm -f /etc/X11/xorg.conf.d/*-oi-lab-*
 systemctl restart lightdm

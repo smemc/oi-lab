@@ -2,7 +2,7 @@ Source: oi-lab
 Section: admin
 Priority: optional
 Maintainer: Laércio de Sousa <laerciosousa@sme-mogidascruzes.sp.gov.br>
-Build-Depends: debhelper (>= 9), libcairo2-dev, libxcb1-dev, libxcb-randr0-dev, libxcb-util0-dev, pkg-config
+Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.5
 Homepage: https://github.com/oiteam/oi-lab
 Vcs-Git: git://github.com/oiteam/oi-lab.git
@@ -19,11 +19,19 @@ Description: automatic user creation and freezing for school labs
  reverted after logout. Another special user is created for
  templating the frozen ones' configuration.
 
-Package: oi-lab-proinfo-multi-seat-utils
+Package: oi-lab-multi-seat-config
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, xserver-xorg-video-siliconmotion
+Depends: ${misc:Depends},
+         python3-cairocffi,
+         python3-evdev,
+         python3-pydbus,
+         python3-pyudev,
+         python3-systemd,
+         python3-xcffib,
+         xserver-xorg-video-siliconmotion
 Recommends: xserver-xorg-video-nested, zram-config
 Suggests: oi-lab-freeze-users, oi-lab-userful-rescue
+Conflicts: oi-lab-proinfo-multi-seat-utils
 Description: utilities for multi-seat support in some ProInfo computers
  This package includes some scripts and configuration files
  for multi-seat support in ProInfo-MEC computers with audio USB hubs from
@@ -62,7 +70,7 @@ Description: additional configuration for Lubuntu and other LXDE-based systems
 Package: oi-lab-xubuntu-extra-settings
 Architecture: all
 Depends: ${misc:Depends}
-Recommends: oi-lab-compton
+Suggests: oi-lab-compton
 Description: additional configuration for Xubuntu and other Xfce-based systems
  This package provides extra settings for Xubuntu and other Xfce-based systems,
  like context menu actions for opening Terminal/File Manager/Text Editor
