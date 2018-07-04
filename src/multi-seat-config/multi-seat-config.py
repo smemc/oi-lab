@@ -68,6 +68,7 @@ def find_root_visual(screen):
 
 class Window:
     def __init__(self, display_number, geometry=None):
+        logger.info('Connecting to X server :{}'.format(display_number))
         self.connection = xcffib.connect(display=':{}'.format(display_number))
         self.id = self.connection.generate_id()
 
@@ -240,9 +241,8 @@ class SeatInputDevice(SeatDevice):
 
 class SeatKMSVideoDevice(SeatDevice):
     def __init__(self, fb, drm):
-        display_number = pci2display(self.pci_slot)
-
         super().__init__(fb)
+        display_number = pci2display(self.pci_slot)
         self.drm = [SeatDevice(d) for d in drm]
         self.window = Window(display_number)
 
@@ -259,7 +259,7 @@ class SeatSM501VideoDevice(SeatNodelessDevice):
     def __init__(self, device):
         super().__init__(device)
         self.display_number = pci2display(self.pci_slot)
-        self.output = device.device.get('SM501_OUTPUT')
+        self.output = device.get('SM501_OUTPUT')
 
         seat_address = pci_format(self.pci_slot, '-')
         xorg_address = pci_format(self.pci_slot, ':')
