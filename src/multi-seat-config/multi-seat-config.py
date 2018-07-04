@@ -69,6 +69,19 @@ def find_root_visual(screen):
                 return v
 
 
+def update_file(file_path, new_data):
+    try:
+        with open(file_path, 'r') as read_file:
+            old_data = read_file.read()
+
+        if new_data != old_data:
+            with open(file_path, 'w') as write_file:
+                write_file.write(new_data)
+    except FileNotFoundError:
+        with open(file_path, 'w+') as new_file:
+            new_file.write(new_data)
+
+
 class Window:
     def __init__(self, display_number, geometry=None):
         logger.info('Connecting to X server :{}'.format(display_number))
@@ -291,17 +304,7 @@ EndSection
 """.format(display_number=self.display_number,
            pci_slot=self.pci_slot,
            xorg_address=xorg_address)
-
-        try:
-            with open(config_file_path, 'r+') as config_file:
-                old_config_data = config_file.read()
-
-                if new_config_data != old_config_data:
-                    config_file.write(new_config_data)
-                    config_file.truncate()
-        except FileNotFoundError:
-            with open(config_file_path, 'w+') as config_file:
-                config_file.write(new_config_data)
+        update_file(config_file_path, new_config_data)
 
         self.window = Window(self.display_number, self.output)
 
@@ -329,16 +332,7 @@ EndSection
            pci_slot=self.pci_slot,
            display_number=self.display_number,
            output=self.output)
-        try:
-            with open(config_file_path, 'r+') as config_file:
-                old_config_data = config_file.read()
-
-                if new_config_data != old_config_data:
-                    config_file.write(new_config_data)
-                    config_file.truncate()
-        except FileNotFoundError:
-            with open(config_file_path, 'w+') as config_file:
-                config_file.write(new_config_data)
+        update_file(config_file_path, new_config_data)
 
 
 def scan_keyboard_devices(context):
