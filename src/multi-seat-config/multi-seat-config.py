@@ -412,7 +412,10 @@ def main():
     available_keyboards = [len(keyboard_devices)]
 
     configured_seats = [False]*min(MAX_SEAT_COUNT, num_seats) + \
-        [None]*(MAX_SEAT_COUNT - num_seats)
+        [None] * (MAX_SEAT_COUNT - num_seats)
+
+    # seat0 is already configured by default
+    configured_seats[0] = True
 
     def refresh_screens(loop):
         for (index, video_device) in enumerate(video_devices):
@@ -450,7 +453,7 @@ def main():
         if (key >= 0 and key <= 3):
             logger.info('Key F{} pressed on keyboard {}'
                         .format(key + 1, keyboard.device_node))
-            video_devices[key].attach_to_seat('seat-{}'.format(key + 1))
+            video_devices[key + 1].attach_to_seat('seat-{}'.format(key + 1))
             keyboard.attach_to_seat('seat-{}'.format(key + 1))
             configured_seats[key] = True
             available_keyboards[0] -= 1
