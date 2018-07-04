@@ -89,7 +89,8 @@ def update_file(file_path, new_data):
 class Window:
     def __init__(self, display_number, geometry=None):
         logger.info('Connecting to X server :{}'.format(display_number))
-        systemd.StartUnit('oi-lab-xorg-daemon@{}.socket'.format(display_number),
+        socket_unit = 'oi-lab-xorg-daemon@{}.socket'.format(display_number)
+        systemd.StartUnit(socket_unit,
                           'replace',
                           dbus_interface=SYSTEMD_INTERFACE)
         self.connection = xcffib.connect(display=':{}'.format(display_number))
@@ -312,6 +313,14 @@ EndSection
            pci_slot=self.pci_slot,
            xorg_address=xorg_address)
         update_file(config_file_path, new_config_data)
+
+        # Enable permanently this socket unit, since it will be needed
+        # even after multi-seat is configured.
+        socket_unit = 'oi-lab-xorg-daemon@{}.socket'.format(
+            self.display_number)
+        systemd.EnableUnitFiles([socket_unit],
+                                False, True,
+                                dbus_interface=SYSTEMD_INTERFACE)
 
         self.window = Window(self.display_number, self.output)
 
