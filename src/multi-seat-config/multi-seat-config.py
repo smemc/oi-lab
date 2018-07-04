@@ -424,15 +424,19 @@ def main():
         video_device.window.set_wm_name('w{}'.format(index + 1))
         video_device.window.load_image('wait-loading.png')
 
-    num_seats = len(video_devices) - 1
+    # The total number of configrable seats is limited by
+    # the availability of video and keyboard devices.
+    num_configurable_seats = min(MAX_SEAT_COUNT,
+                                 len(video_devices) - 1,
+                                 len(keyboard_devices) - 1)
 
     # Put this in a list, so it can be used globally in coroutines
     available_keyboards = [len(keyboard_devices)]
 
     # seat0 is already configured by default
     configured_seats = [True] \
-        + [False]*min(MAX_SEAT_COUNT, num_seats) \
-        + [None]*(MAX_SEAT_COUNT - num_seats - 1)
+        + [False]*num_configurable_seats \
+        + [None]*(MAX_SEAT_COUNT - 1 - num_configurable_seats)
 
     def refresh_screens(loop):
         for (index, video_device) in enumerate(video_devices):
@@ -478,7 +482,7 @@ def main():
 
     sleep(1)
 
-    if num_seats > 1 and available_keyboards[0] > 1:
+    if num_configurable_seats > 0:
         loop = asyncio.get_event_loop()
         coroutines = (read_all_keys(loop, keyboard)
                       for keyboard in keyboard_devices)
