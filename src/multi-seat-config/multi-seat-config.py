@@ -183,7 +183,8 @@ class SeatNodelessDevice:
         self.device_path = device.device_path
         self.sys_path = device.sys_path
         self.sys_name = device.sys_name
-        self.pci_slot = device.find_parent('pci').properties['PCI_SLOT_NAME']
+        self.pci_slot = device.find_parent(
+            'pci').properties['PCI_SLOT_NAME'].lstrip('0000:')
         self.seat_name = device.get('ID_SEAT')
 
     def attach_to_seat(self, seat_name):
