@@ -21,15 +21,18 @@ import pyudev
 from evdev import (InputDevice, ecodes)
 
 # DBus modules (for communication with systemd-logind)
-from pydbus import SystemBus
+from dbus import SystemBus
 
 from time import (sleep, time)
 
 MAX_SEAT_COUNT = 5
 XORG_CONF_DIR = '/etc/X11/xorg.conf.d'
+LOGIND_PATH = 'org.freedesktop.login1'
+LOGIND_OBJECT = '/org/freedesktop/login1'
+LOGIND_INTERFACE = 'org.freedesktop.login1.Manager'
 
 bus = SystemBus()
-logind = bus.get('.login1')
+logind = bus.get_object(LOGIND_PATH, LOGIND_OBJECT)
 
 logger = logging.getLogger(argv[0])
 logger.setLevel(logging.INFO)
@@ -189,7 +192,8 @@ class SeatNodelessDevice:
 
     def attach_to_seat(self, seat_name):
         try:
-            logind.AttachDevice(seat_name, self.sys_path)
+            logind.AttachDevice(seat_name, self.sys_path, False,
+                                dbus_interface=LOGIND_INTERFACE)
             logger.info('Device %s successfully attached to seat %s',
                         self.sys_path, seat_name)
         except Exception as error:
