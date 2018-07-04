@@ -25,7 +25,7 @@ from pydbus import SystemBus
 
 from time import (sleep, time)
 
-MAX_SEAT_COUNT = 4
+MAX_SEAT_COUNT = 5
 XORG_CONF_DIR = '/etc/X11/xorg.conf.d'
 
 bus = SystemBus()
@@ -406,18 +406,20 @@ def main():
         video_device.window.set_wm_name('w{}'.format(index + 1))
         video_device.window.load_image('wait-loading.png')
 
-    num_seats = len(video_devices)
+    num_seats = len(video_devices) - 1
 
     # Put this in a list, so it can be used globally in coroutines
     available_keyboards = [len(keyboard_devices)]
 
-    configured_seats = [False]*min(MAX_SEAT_COUNT, num_seats) + \
-        [None]*(MAX_SEAT_COUNT - num_seats)
+    # seat0 is already configured by default
+    configured_seats = [True] \
+        + [False]*(min(MAX_SEAT_COUNT, num_seats) - 1) \
+        + [None]*(MAX_SEAT_COUNT - num_seats)
 
     def refresh_screens(loop):
         for (index, video_device) in enumerate(video_devices):
             status = ''.join(str(int(bool(is_configured)))
-                             for is_configured in configured_seats)
+                             for is_configured in configured_seats[1:])
             remaining_seats = configured_seats.count(False)
             video_device.window.load_image(
                 'seat{}-{}.png'.format(index, status))
@@ -436,7 +438,7 @@ def main():
         async for event in device.async_read_loop():
             # pylint: disable=no-member
             if event.type == ecodes.EV_KEY and event.value == 1:
-                key = event.code - ecodes.KEY_F1
+                key = event.code - ecodes.KEY_F1 + 1
                 return key
 
     async def read_all_keys(loop, keyboard):
@@ -447,11 +449,11 @@ def main():
             key = await read_key(keyboard)
             new_key_pressed = (configured_seats[key] == False)
 
-        if (key >= 0 and key <= 3):
+        if (key >= 1 and key <= 4):
             logger.info('Key F{} pressed on keyboard {}'
-                        .format(key + 1, keyboard.device_node))
-            video_devices[key].attach_to_seat('seat-{}'.format(key + 1))
-            keyboard.attach_to_seat('seat-{}'.format(key + 1))
+                        .format(key, keyboard.device_node))
+            video_devices[key].attach_to_seat('seat-{}'.format(key))
+            keyboard.attach_to_seat('seat-{}'.format(key))
             configured_seats[key] = True
             available_keyboards[0] -= 1
             refresh_screens(loop)
