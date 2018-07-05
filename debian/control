@@ -20,7 +20,7 @@ Description: automatic user creation and freezing for school labs
  templating the frozen ones' configuration.
 
 Package: oi-lab-multi-seat-config
-Architecture: any
+Architecture: all
 Depends: ${misc:Depends},
          python3-cairocffi,
          python3-evdev,
