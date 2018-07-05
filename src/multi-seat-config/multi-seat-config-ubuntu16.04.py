@@ -415,8 +415,8 @@ def main():
     # The total number of configrable seats is limited by
     # the availability of video and keyboard devices.
     num_configurable_seats = min(MAX_SEAT_COUNT,
-                                 len(video_devices) - 1,
-                                 len(keyboard_devices) - 1)
+                                 len(video_devices),
+                                 len(keyboard_devices)) - 1
 
     # Put this in a list, so it can be used globally in coroutines
     available_keyboards = [len(keyboard_devices)]
