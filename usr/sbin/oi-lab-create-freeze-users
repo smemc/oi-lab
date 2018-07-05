@@ -34,7 +34,7 @@ for i in $(seq -w ${num_users})
 do
     username="aluno${i}"
     fullname="Aluno #${i}"
-
+    
     if ! getent passwd ${username} >/dev/null
     then
         adduser --disabled-login --gecos "${fullname}" --shell /bin/bash ${username}
@@ -53,16 +53,16 @@ then
 #[Seat:seat0]
 #autologin-user=aluno1
 
-#[Seat:seat-sm501-0-lvds]
+#[Seat:seat-1]
 #autologin-user=aluno2
 
-#[Seat:seat-sm501-0-vga]
+#[Seat:seat-2]
 #autologin-user=aluno3
 
-#[Seat:seat-sm501-1-lvds]
+#[Seat:seat-3]
 #autologin-user=aluno4
 
-#[Seat:seat-sm501-1-vga]
+#[Seat:seat-4]
 #autologin-user=aluno5
 EOF
 fi
