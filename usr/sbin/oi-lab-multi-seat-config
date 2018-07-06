@@ -84,7 +84,7 @@ class Window:
         logger.info(f'Connecting to X server :{display_number}')
         socket_unit = f'oi-lab-xorg-daemon@{display_number}.socket'
         systemd.StartUnit(socket_unit, 'replace')
-        self.connection = xcffib.connect(display=':{display_number}')
+        self.connection = xcffib.connect(display=f':{display_number}')
         self.id = self.connection.generate_id()
 
         screen = self.connection.get_setup().roots[self.connection.pref_screen]
