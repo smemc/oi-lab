@@ -204,9 +204,11 @@ class SeatNodelessDevice:
         self.device_path = device.device_path
         self.sys_path = device.sys_path
         self.sys_name = device.sys_name
-        self.pci_slot = device.find_parent(
-            'pci').properties['PCI_SLOT_NAME'].lstrip('0000:')
         self.seat_name = device.get('ID_SEAT')
+
+        parent = device.find_parent('pci')
+        self.pci_slot = (parent.properties['PCI_SLOT_NAME'].lstrip('0000:')
+                         if parent is not None else None)
 
     def attach_to_seat(self, seat_name):
         try:
@@ -241,9 +243,11 @@ class SeatInputDevice(SeatDevice):
 
         def get_parent_hub(device):
             parent = device.find_parent('usb', device_type='usb_device')
-            return None if is_root_hub(parent) else (
-                SeatHubDevice(parent) if 'seat' in parent.tags
-                else get_parent_hub(parent))
+            return (None
+                    if (parent is None or is_root_hub(parent))
+                    else (SeatHubDevice(parent)
+                          if 'seat' in parent.tags
+                          else get_parent_hub(parent)))
 
         super().__init__(device)
 
@@ -251,7 +255,7 @@ class SeatInputDevice(SeatDevice):
         self.parent = get_parent_hub(device)
 
     def attach_to_seat(self, seat_name):
-        if self.parent:
+        if self.parent is not None:
             # If input device is connected to a USB hub,
             # attach the hub to the seat instead, so that
             # all other devices connected to the same hub
@@ -349,22 +353,29 @@ EndSection
 
 def scan_keyboard_devices(context):
     devices = context.list_devices(subsystem='input', ID_INPUT_KEYBOARD=True)
-    return [SeatInputDevice(device) for device in devices if device.device_node]
+    return [SeatInputDevice(device)
+            for device in devices
+            if device.device_node is not None]
 
 
 def scan_mouse_devices(context):
     devices = context.list_devices(subsystem='input',
                                    ID_INPUT_MOUSE=True,
                                    sys_name='event*')
-    return [SeatInputDevice(device) for device in devices if device.device_node]
+    return [SeatInputDevice(device)
+            for device in devices
+            if device.device_node is not None]
 
 
 def scan_kms_video_devices(context):
     drms = context.list_devices(subsystem='drm')
     fbs = context.list_devices(subsystem='graphics')
-    devices = [(fb, [drm for drm in drms
-                     if drm.parent == fb.parent and drm.device_node])
-               for fb in fbs if fb.device_node]
+    devices = [(fb,
+                [drm
+                 for drm in drms
+                 if drm.parent == fb.parent and drm.device_node is not None])
+               for fb in fbs
+               if fb.device_node is not None]
     return [SeatKMSVideoDevice(*device) for device in devices]
 
 
@@ -384,14 +395,14 @@ def main():
         logger.info('Keyboard detected: %s -> %s',
                     device.device_node, device.sys_path)
 
-        if device.parent:
+        if device.parent is not None:
             logger.info('>>> Parent device: %s', device.parent.sys_path)
 
     for device in mouse_devices:
         logger.info('Mouse detected: %s -> %s',
                     device.device_node, device.sys_path)
 
-        if device.parent:
+        if device.parent is not None:
             logger.info('>>> Parent device: %s', device.parent.sys_path)
 
     for device in kms_video_devices:
