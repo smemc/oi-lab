@@ -469,8 +469,7 @@ def main():
                 async for event in device.async_read_loop():
                     # pylint: disable=no-member
                     if event.type == ecodes.EV_KEY and event.value == 1:
-                        key = event.code - ecodes.KEY_F1 + 1
-                        return key
+                        return event.code - ecodes.KEY_F1 + 1
 
             new_key_pressed = False
             refresh_screens(loop)
@@ -479,7 +478,7 @@ def main():
                 key = await read_key(keyboard)
                 new_key_pressed = (configured_seats[key] == False)
 
-            if (key >= 1 and key <= 4):
+            if (1 <= key <= num_configurable_seats):
                 logger.info('Key F{} pressed on keyboard {}'
                             .format(key, keyboard.device_node))
                 video_devices[key].attach_to_seat('seat-{}'.format(key))
