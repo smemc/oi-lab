@@ -268,9 +268,12 @@ class SeatInputDevice(SeatDevice):
 class SeatKMSVideoDevice(SeatDevice):
     def __init__(self, fb, drm):
         super().__init__(fb)
-        display_number = pci2display(self.pci_slot)
+        self.display_number = pci2display(self.pci_slot)
         self.drm = [SeatDevice(d) for d in drm]
-        self.window = Window(display_number)
+        self.window = None
+
+    def initialize_window(self):
+        self.window = Window(self.display_number)
 
     def attach_to_seat(self, seat_name):
         # Attach the framebuffer device node
@@ -286,7 +289,9 @@ class SeatSM501VideoDevice(SeatNodelessDevice):
         super().__init__(device)
         self.display_number = pci2display(self.pci_slot)
         self.output = device.get('SM501_OUTPUT')
+        self.window = None
 
+    def initialize_window(self):
         seat_address = pci_format(self.pci_slot, '-')
         xorg_address = pci_format(self.pci_slot, ':')
         config_file_path = '{}/21-oi-lab-sm501-{}.conf'.format(XORG_CONF_DIR,
@@ -418,11 +423,6 @@ def main():
 
     video_devices = kms_video_devices + sm501_video_devices
 
-    for (index, video_device) in enumerate(video_devices):
-        video_device.window.set_wm_name('w{}'.format(index + 1))
-        video_device.window.load_image(
-            '{}/wait-loading.png'.format(SCREENS_DIR))
-
     # The total number of configrable seats is limited by
     # the availability of video and keyboard devices.
     num_configurable_seats = min(MAX_SEAT_COUNT,
@@ -478,9 +478,14 @@ def main():
             available_keyboards[0] -= 1
             refresh_screens(loop)
 
-    sleep(1)
-
     if num_configurable_seats > 0:
+        for (index, video_device) in enumerate(video_devices):
+            video_device.initialize_window()
+            video_device.window.set_wm_name('w{}'.format(index + 1))
+            video_device.window.load_image(
+                '{}/wait-loading.png'.format(SCREENS_DIR))
+
+        sleep(1)
         loop = asyncio.get_event_loop()
         coroutines = (read_all_keys(loop, keyboard)
                       for keyboard in keyboard_devices)
