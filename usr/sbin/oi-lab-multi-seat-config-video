@@ -50,21 +50,31 @@ class SeatNodelessDevice:
         self.device_path = device.device_path
         self.sys_path = device.sys_path
         self.sys_name = device.sys_name
-        self.seat_name = device.get('ID_SEAT')
+        self.seat_name = device.properties.get('ID_SEAT')
+
+        try:
+            self.is_auto_seat = device.properties.asbool('ID_AUTOSEAT')
+        except:
+            self.is_auto_seat = False
 
         parent = device.find_parent('pci')
         self.pci_slot = (parent.properties['PCI_SLOT_NAME'].lstrip('0000:')
                          if parent is not None else None)
 
     def attach_to_seat(self, seat_name):
-        try:
-            logind.AttachDevice(seat_name, self.sys_path, False)
-            logger.info('Device %s successfully attached to seat %s',
-                        self.sys_path, seat_name)
-        except Exception as error:
-            logger.error('Failed to attach device %s to seat %s!',
-                         self.sys_path, seat_name)
-            logger.error(error)
+        # Skip explicit seat attaching via systemd-logind if device has
+        # udev property ENV{ID_AUTOSEAT} set to "1" (in this case,
+        # it should already have a proper seat name).
+        if not self.is_auto_seat or self.seat_name is None:
+            try:
+                logind.AttachDevice(seat_name, self.sys_path, False)
+                self.seat_name = seat_name
+                logger.info('Device %s successfully attached to seat %s',
+                            self.sys_path, seat_name)
+            except Exception as error:
+                logger.error('Failed to attach device %s to seat %s!',
+                             self.sys_path, seat_name)
+                logger.error(error)
 
 
 class SeatDevice(SeatNodelessDevice):
@@ -93,12 +103,13 @@ class SeatSM501VideoDevice(SeatNodelessDevice):
             return re.sub(r'\.|:', delimiter, pci_slot)
 
         super().__init__(device)
-        self.output = device.get('SM501_OUTPUT')
+        self.output = device.properties.get('SM501_OUTPUT')
         self.display_number = int(pci_format(self.pci_slot), base=16)
         seat_address = pci_format(self.pci_slot, '-')
         xorg_address = pci_format(self.pci_slot, ':')
         file_path = f'{XORG_CONF_DIR}/21-oi-lab-sm501-{seat_address}.conf'
-        new_config_data = f"""Section "Device"
+        new_config_data = f"""\
+Section "Device"
     MatchSeat "__fake-seat-{self.display_number}__"
     Identifier "Silicon Motion SM501 Video Card {self.pci_slot}"
     BusID "PCI:{xorg_address}"
@@ -123,25 +134,30 @@ EndSection
         socket_unit = f'oi-lab-xorg-daemon@{self.display_number}.socket'
         systemd.EnableUnitFiles([socket_unit], False, True)
 
-    def attach_to_seat(self, seat_name):
-        super().attach_to_seat(seat_name)
-        file_path = f'{XORG_CONF_DIR}/22-oi-lab-nested-{seat_name}.conf'
-        new_config_data = f"""Section "Device"
-    MatchSeat "{seat_name}"
+    def write_nested_xorg_conf(self):
+        if self.seat_name is not None:
+            file_path = f'{XORG_CONF_DIR}/22-oi-lab-nested-{self.seat_name}.conf'
+            new_config_data = f"""\
+Section "Device"
+    MatchSeat "{self.seat_name}"
     Identifier "Nested Device {self.pci_slot}"
     Driver "nested"
     Option "Display" ":{self.display_number}"
 EndSection
 
 Section "Screen"
-    MatchSeat "{seat_name}"
+    MatchSeat "{self.seat_name}"
     Identifier "Nested Screen {self.output} {self.pci_slot}"
     Device "Nested Device {self.pci_slot}"
     DefaultDepth 16
     Option "Output" "{self.output}"
 EndSection
 """
-        update_file(file_path, new_config_data)
+            update_file(file_path, new_config_data)
+
+    def attach_to_seat(self, seat_name):
+        super().attach_to_seat(seat_name)
+        self.write_nested_xorg_conf()
 
 
 def scan_kms_video_devices(context):
