@@ -1,8 +1,9 @@
 lib/udev
 lib/systemd/system/display-manager.service.d
-lib/systemd/system/oi-lab-multi-seat-config.service
+lib/systemd/system/oi-lab-multi-seat-config-video.service
 lib/systemd/system/oi-lab-xorg-daemon@.s*
-usr/sbin/oi-lab-multi-seat-config
+usr/sbin/oi-lab-multi-seat-config-*
 usr/sbin/oi-lab-reset-seats
+usr/share/lightdm
 usr/share/oi-lab-multi-seat-config
 usr/share/X11

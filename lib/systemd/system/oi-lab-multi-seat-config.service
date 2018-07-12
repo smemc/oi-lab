@@ -1,9 +1,0 @@
-[Unit]
-Description=OI-Lab multi-seat configuration
-ConditionPathExistsGlob=!/etc/udev/rules.d/72-seat-*
-
-[Service]
-Type=oneshot
-ExecStart=/usr/sbin/oi-lab-multi-seat-config
-ExecStartPost=/sbin/udevadm control --reload-rules
-ExecStartPost=/sbin/udevadm trigger
