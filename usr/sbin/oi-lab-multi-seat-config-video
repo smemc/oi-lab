@@ -3,6 +3,7 @@
 
 import re
 from sys import argv, stdout
+from subprocess import run
 
 # Logging modules
 import logging
@@ -69,6 +70,13 @@ class SeatNodelessDevice:
             try:
                 logind.AttachDevice(seat_name, self.sys_path, False)
                 self.seat_name = seat_name
+
+                # Sometimes the new udev rules are not automatically loaded
+                # after calling systemd-logind's AttachDevice() method,
+                # so we'll force it here.
+                run(['udevadm', 'control', '--reload-rules'])
+                run(['udevadm', 'trigger'])
+
                 logger.info('Device %s successfully attached to seat %s',
                             self.sys_path, seat_name)
             except Exception as error:
