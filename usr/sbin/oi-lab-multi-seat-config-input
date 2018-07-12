@@ -25,8 +25,7 @@ from pydbus import SystemBus
 
 from time import (sleep, time)
 
-DISPLAY = os.environ.get('DISPLAY')
-SEAT_NAME = os.environ.get('XDG_SEAT')
+THIS_SEAT_NAME = os.environ['XDG_SEAT']
 
 MAX_SEAT_COUNT = 5
 XORG_CONF_DIR = '/etc/X11/xorg.conf.d'
@@ -56,7 +55,7 @@ def find_root_visual(screen):
 
 class Window:
     def __init__(self):
-        logger.info(f'Connecting to X server {DISPLAY}')
+        logger.info(f'Connecting to X server {os.environ["DISPLAY"]}')
         self.connection = xcffib.connect()
         self.id = self.connection.generate_id()
 
@@ -230,7 +229,7 @@ def main():
     }
     configured_seats = OrderedDict(sorted(d.items(), key=lambda item: item[0]))
 
-    if configured_seats[SEAT_NAME]:
+    if configured_seats[THIS_SEAT_NAME]:
         # There's already a keyboard attached to this seat. We can exit now.
         return
 
@@ -266,7 +265,7 @@ def main():
 
     # Initialize window
     window = Window()
-    window.set_wm_name(f'oi-lab-multi-seat-window-{SEAT_NAME}')
+    window.set_wm_name(f'oi-lab-multi-seat-window-{THIS_SEAT_NAME}')
     window.load_image(f'{SCREENS_DIR}/wait-loading.png')
     sleep(2)
 
@@ -277,7 +276,7 @@ def main():
             seat_names = [*configured_seats.keys()]
             seat_states = [*configured_seats.values()]
 
-            index = seat_names.index(SEAT_NAME)
+            index = seat_names.index(THIS_SEAT_NAME)
             status = ''.join(f'{state:d}'
                              for state in seat_states[1:])
             window.load_image(
@@ -287,8 +286,10 @@ def main():
             window.write_message(
                 f'Terminais restantes: {remaining_seats}        Teclados disponíveis: {num_available_keyboards[0]}')
 
-            if configured_seats[SEAT_NAME]:
+            if configured_seats[THIS_SEAT_NAME]:
                 loop.stop()
+
+        refresh_screen(loop)
 
         # EV_KEY event values: 0 (release), 1 (press), or 2 (hold)
         async def read_key(keyboard):
@@ -299,21 +300,23 @@ def main():
                 if event.type == ecodes.EV_KEY and event.value == 1:
                     return event.code - ecodes.KEY_F1 + 1
 
-        new_key_pressed = False
-        refresh_screen(loop)
+        valid_key_pressed = False
 
-        while not new_key_pressed:
+        while not valid_key_pressed:
             key = await read_key(keyboard)
-            new_key_pressed = ([*configured_seats.values()][key] == False)
+            valid_key_pressed = (1 <= key <= len(configured_seats)
+                                 and not [*configured_seats.values()][key])
 
-        if (1 <= key <= len(configured_seats)):
-            logger.info(
-                f'Key F{key} pressed on keyboard {keyboard.device_node}')
-            seat_name = [*configured_seats.keys()][key]
-            keyboard.attach_to_seat(seat_name)
-            configured_seats[seat_name] = True
-            num_available_keyboards[0] -= 1
-            refresh_screen(loop)
+        logger.info(f'Key F{key} pressed on keyboard {keyboard.device_node}')
+        key_seat_name = [*configured_seats.keys()][key]
+
+        if (key_seat_name == THIS_SEAT_NAME):
+            # This is the key we expect! Attach the keyboard to this seat.
+            keyboard.attach_to_seat(key_seat_name)
+
+        configured_seats[key_seat_name] = True
+        num_available_keyboards[0] -= 1
+        refresh_screen(loop)
 
     coroutines = (read_all_keys(loop, keyboard)
                   for keyboard in available_keyboard_devices)
@@ -322,12 +325,12 @@ def main():
     try:
         loop.run_until_complete(future)
     except RuntimeError as error:
-        if [*configured_seats.values()].count(False) == 0:
-            pass
-        else:
+        # It's OK to stop the loop if there still are
+        # unfinished coroutines and this seat was just configured.
+        if not configured_seats[THIS_SEAT_NAME]:
             raise error
 
-    logger.info('Multi-seat configuration finished.')
+    logger.info(f'Configuration finished for {THIS_SEAT_NAME}.')
     sleep(2)
 
 
