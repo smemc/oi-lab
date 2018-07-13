@@ -169,20 +169,31 @@ class SeatDevice(SeatNodelessDevice):
 class SeatHubDevice(SeatNodelessDevice):
     def __init__(self, device):
         super().__init__(device)
-        self.product_id = device.attributes.asstring('idProduct')
-        self.vendor_id = device.attributes.asstring('idVendor')
+
+        try:
+            self.product_id = device.attributes.asstring('idProduct')
+        except:
+            self.product_id = None
+
+        try:
+            self.vendor_id = device.attributes.asstring('idVendor')
+        except:
+            self.vendor_id = None
 
 
 class SeatInputDevice(SeatDevice):
     def __init__(self, device):
         def is_root_hub(device):
             # all root hubs have the same manufacturer 1d6b (Linux Foundation)
-            return device.attributes.asstring('idVendor') == '1d6b'
+            try:
+                return device.attributes.asstring('idVendor') == '1d6b'
+            except:
+                return False
 
         def get_parent_hub(device):
             parent = device.find_parent('usb', device_type='usb_device')
             return (None
-                    if (parent is None or is_root_hub(parent))
+                    if parent is None or is_root_hub(parent)
                     else (SeatHubDevice(parent)
                           if 'seat' in parent.tags
                           else get_parent_hub(parent)))
@@ -228,13 +239,11 @@ def main():
     # - True, if seat_name is seat0 or if there's at least one keyboard
     #   attached to seat_name, or
     # - False, otherwise.
-    d = {
-        seat_name: (seat_name == 'seat0'
-                    or bool([device
-                             for device in all_keyboard_devices
-                             if device.seat_name == seat_name]))
-        for (seat_name, _) in logind.ListSeats()
-    }
+    d = {seat_name: (seat_name == 'seat0'
+                     or bool([device
+                              for device in all_keyboard_devices
+                              if device.seat_name == seat_name]))
+         for (seat_name, _) in logind.ListSeats()}
     configured_seats = OrderedDict(sorted(d.items(), key=lambda item: item[0]))
 
     if configured_seats[THIS_SEAT_NAME]:
@@ -262,7 +271,7 @@ def main():
         if device.parent is not None:
             logger.info('>>> Parent device: %s', device.parent.sys_path)
 
-    if (len(available_keyboard_devices) <= 1):
+    if len(available_keyboard_devices) <= 1:
         # There are not enough keyboards available to attach to this seat
         # (if there's only one keyboard available, it will be reserved
         # to seat0), so we can exit now.
