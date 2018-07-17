@@ -1,3 +1,4 @@
+etc/sudoers.d
 lib/udev
 lib/systemd/system/display-manager.service.d
 lib/systemd/system/oi-lab-multi-seat-config-video.service
