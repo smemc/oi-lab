@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import re
-from sys import argv, stdout
+import os
+import sys
 from subprocess import run
 
 # Logging modules
@@ -23,10 +24,10 @@ bus = SystemBus()
 logind = bus.get('.login1')
 systemd = bus.get('.systemd1')
 
-logger = logging.getLogger(argv[0])
+logger = logging.getLogger(sys.argv[0])
 logger.setLevel(logging.INFO)
 logger.propagate = False
-stdout_handler = logging.StreamHandler(stdout)
+stdout_handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter(
     '%(asctime)s %(name)s[%(process)s] %(levelname)s %(message)s')
 stdout_handler.setFormatter(formatter)
@@ -34,25 +35,30 @@ logger.addHandler(stdout_handler)
 logger.addHandler(JournalHandler())
 
 
+def ensure_open(file_path, mode):
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    return open(file_path, mode)
+
+
 def create_file(file_path, new_data):
     try:
-        with open(file_path, 'r') as read_file:
+        with ensure_open(file_path, 'r') as read_file:
             read_file.read()
     except FileNotFoundError:
-        with open(file_path, 'w+') as new_file:
+        with ensure_open(file_path, 'w+') as new_file:
             new_file.write(new_data)
 
 
 def update_file(file_path, new_data):
     try:
-        with open(file_path, 'r') as read_file:
+        with ensure_open(file_path, 'r') as read_file:
             old_data = read_file.read()
 
         if new_data != old_data:
-            with open(file_path, 'w') as write_file:
+            with ensure_open(file_path, 'w') as write_file:
                 write_file.write(new_data)
     except FileNotFoundError:
-        with open(file_path, 'w+') as new_file:
+        with ensure_open(file_path, 'w+') as new_file:
             new_file.write(new_data)
 
 
