@@ -14,13 +14,13 @@ from systemd.journal import JournalHandler
 import pyudev
 
 # DBus modules (for communication with systemd-logind)
-from pydbus import SystemBus
+import pydbus
 
 MAX_SEAT_COUNT = 5
 XORG_CONF_DIR = '/etc/X11/xorg.conf.d'
 LIGHTDM_CONF_DIR = '/etc/lightdm/lightdm.conf.d'
 
-bus = SystemBus()
+bus = pydbus.SystemBus()
 logind = bus.get('.login1')
 systemd = bus.get('.systemd1')
 
