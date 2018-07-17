@@ -3,8 +3,8 @@
 
 import re
 import os
+import sys
 import subprocess
-from sys import argv, stdout
 from collections import OrderedDict
 
 # Logging modules
@@ -33,10 +33,10 @@ SCREENS_DIR = '/usr/share/oi-lab-multi-seat-config/screens'
 bus = SystemBus()
 logind = bus.get('.login1')
 
-logger = logging.getLogger(argv[0])
+logger = logging.getLogger(sys.argv[0])
 logger.setLevel(logging.INFO)
 logger.propagate = False
-stdout_handler = logging.StreamHandler(stdout)
+stdout_handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter(
     '%(asctime)s %(name)s[%(process)s] %(levelname)s %(message)s')
 stdout_handler.setFormatter(formatter)
@@ -302,7 +302,9 @@ def main():
         # There are not enough keyboards available to attach to this seat
         # (if there's only one keyboard available, it will be reserved
         # to seat0), so we can exit now.
-        return
+        logger.info(
+            f'No input devices available for {this_seat_name}. Seat configuration aborted.')
+        sys.exit(1)
 
     # Put this in a list, so it can be used globally in coroutines
     num_available_keyboards = [len(available_keyboard_devices)]
@@ -331,12 +333,18 @@ def main():
             window.load_image(
                 f'{SCREENS_DIR}/seat{index}-{status}.png')
 
-            remaining_seats = seat_states.count(False)
+            remaining_seats = min(seat_states.count(False),
+                                  num_available_keyboards[0] - 1)
             window.write_message(
                 f'Terminais restantes: {remaining_seats}        Teclados disponíveis: {num_available_keyboards[0]}')
 
             if configured_seats[this_seat_name]:
                 loop.stop()
+            elif remaining_seats == 0:
+                logger.info(
+                    f'No more input devices available for {this_seat_name}. Seat configuration aborted.')
+                sleep(1)
+                sys.exit(1)
 
         refresh_screen(loop)
 
