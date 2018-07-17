@@ -17,6 +17,7 @@ from pydbus import SystemBus
 
 MAX_SEAT_COUNT = 5
 XORG_CONF_DIR = '/etc/X11/xorg.conf.d'
+LIGHTDM_CONF_DIR = '/etc/lightdm/lightdm.conf.d'
 
 bus = SystemBus()
 logind = bus.get('.login1')
@@ -33,6 +34,15 @@ logger.addHandler(stdout_handler)
 logger.addHandler(JournalHandler())
 
 
+def create_file(file_path, new_data):
+    try:
+        with open(file_path, 'r') as read_file:
+            read_file.read()
+    except FileNotFoundError:
+        with open(file_path, 'w+') as new_file:
+            new_file.write(new_data)
+
+
 def update_file(file_path, new_data):
     try:
         with open(file_path, 'r') as read_file:
@@ -46,9 +56,10 @@ def update_file(file_path, new_data):
             new_file.write(new_data)
 
 
-class SeatNodelessDevice:
+class SeatDevice:
     def __init__(self, device):
         self.device_path = device.device_path
+        self.device_node = device.device_node
         self.sys_path = device.sys_path
         self.sys_name = device.sys_name
         self.seat_name = device.properties.get('ID_SEAT')
@@ -62,12 +73,13 @@ class SeatNodelessDevice:
         self.pci_slot = (parent.properties['PCI_SLOT_NAME'].lstrip('0000:')
                          if parent is not None else None)
 
-    def attach_to_seat(self, seat_name):
+    def attach_to_seat(self, seat_index):
         # Skip explicit seat attaching via systemd-logind if device has
         # udev property ENV{ID_AUTOSEAT} set to "1" (in this case,
         # it should already have a proper seat name).
         if not self.is_auto_seat or self.seat_name is None:
             try:
+                seat_name = f'seat-{seat_index}'
                 logind.AttachDevice(seat_name, self.sys_path, False)
                 self.seat_name = seat_name
 
@@ -85,27 +97,40 @@ class SeatNodelessDevice:
                 logger.error(error)
 
 
-class SeatDevice(SeatNodelessDevice):
+class SeatMasterDevice(SeatDevice):
     def __init__(self, device):
         super().__init__(device)
-        self.device_node = device.device_node
+
+    def write_sample_lightdm_conf(self, seat_index):
+        if self.seat_name is not None:
+            file_path = f'{LIGHTDM_CONF_DIR}/70-oi-lab-{self.seat_name}.conf'
+            sample_data = f"""\
+[Seat:{self.seat_name}]
+#autologin-user-timeout=20
+#autologin-user=aluno{seat_index}
+"""
+            create_file(file_path, sample_data)
+
+    def attach_to_seat(self, seat_index):
+        super().attach_to_seat(seat_index)
+        self.write_sample_lightdm_conf(seat_index)
 
 
-class SeatKMSVideoDevice(SeatDevice):
+class SeatKMSVideoDevice(SeatMasterDevice):
     def __init__(self, fb, drm):
         super().__init__(fb)
         self.drm = [SeatDevice(d) for d in drm]
 
-    def attach_to_seat(self, seat_name):
+    def attach_to_seat(self, seat_index):
         # Attach the framebuffer device node
-        super().attach_to_seat(seat_name)
+        super().attach_to_seat(seat_index)
 
         for node in self.drm:
             # Attach all other DRM device nodes as well
-            node.attach_to_seat(seat_name)
+            node.attach_to_seat(self.seat_name)
 
 
-class SeatSM501VideoDevice(SeatNodelessDevice):
+class SeatSM501VideoDevice(SeatMasterDevice):
     def __init__(self, device):
         def pci_format(pci_slot, delimiter=''):
             return re.sub(r'\.|:', delimiter, pci_slot)
@@ -163,8 +188,8 @@ EndSection
 """
             update_file(file_path, new_config_data)
 
-    def attach_to_seat(self, seat_name):
-        super().attach_to_seat(seat_name)
+    def attach_to_seat(self, seat_index):
+        super().attach_to_seat(seat_index)
         self.write_nested_xorg_conf()
 
 
@@ -208,9 +233,15 @@ def main():
     # (we'll reserve it for seat0).
     num_configurable_seats = min(MAX_SEAT_COUNT, len(video_devices)) - 1
 
+    # The first video device (normally /dev/fb0) will be reserved
+    # for seat0. There's no need to attach it explicitly,
+    # but it's convenient to write a sample lightdm.conf for it.
+    video_devices[0].seat_name = 'seat0'
+    video_devices[0].write_sample_lightdm_conf(0)
+
     if num_configurable_seats > 0:
         for (index, video_device) in enumerate(video_devices[1:]):
-            video_device.attach_to_seat(f'seat-{index+1}')
+            video_device.attach_to_seat(index + 1)
 
 
 if __name__ == '__main__':
