@@ -151,9 +151,10 @@ class Window:
         self.connection.flush()
 
 
-class SeatNodelessDevice:
+class SeatDevice:
     def __init__(self, device):
         self.device_path = device.device_path
+        self.device_node = device.device_node
         self.sys_path = device.sys_path
         self.sys_name = device.sys_name
         self.seat_name = device.properties.get('ID_SEAT')
@@ -181,13 +182,7 @@ class SeatNodelessDevice:
             logger.error(error)
 
 
-class SeatDevice(SeatNodelessDevice):
-    def __init__(self, device):
-        super().__init__(device)
-        self.device_node = device.device_node
-
-
-class SeatHubDevice(SeatNodelessDevice):
+class SeatHubDevice(SeatDevice):
     def __init__(self, device):
         super().__init__(device)
 
