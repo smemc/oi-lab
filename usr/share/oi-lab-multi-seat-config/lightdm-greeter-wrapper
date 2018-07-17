@@ -1,0 +1,3 @@
+#!/bin/sh
+sudo oi-lab-multi-seat-config-input
+exec /usr/lib/lightdm/lightdm-greeter-session "$@"

@@ -1,0 +1,1 @@
+lightdm ALL = (ALL) NOPASSWD: /usr/sbin/oi-lab-multi-seat-config-input
