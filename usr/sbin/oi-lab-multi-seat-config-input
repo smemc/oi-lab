@@ -3,9 +3,9 @@
 
 import re
 import os
+import subprocess
 from sys import argv, stdout
 from collections import OrderedDict
-from subprocess import run
 
 # Logging modules
 import logging
@@ -26,8 +26,6 @@ from pydbus import SystemBus
 
 from time import (sleep, time)
 
-THIS_SEAT_NAME = os.environ['XDG_SEAT']
-
 MAX_SEAT_COUNT = 5
 XORG_CONF_DIR = '/etc/X11/xorg.conf.d'
 SCREENS_DIR = '/usr/share/oi-lab-multi-seat-config/screens'
@@ -44,6 +42,29 @@ formatter = logging.Formatter(
 stdout_handler.setFormatter(formatter)
 logger.addHandler(stdout_handler)
 logger.addHandler(JournalHandler())
+
+
+def get_seat_name():
+    seat_name = os.getenv('XDG_SEAT')
+
+    if seat_name is not None:
+        return seat_name
+    else:
+        output = subprocess.check_output(
+            ['ps', '--no-headers', '-o', 'cmd', '-C', 'Xorg']
+        ).decode('utf-8').strip().split('\n')
+
+        for line in output:
+            if os.environ['DISPLAY'].split('.')[0] in line:
+                args = line.split(' ')
+
+                for arg in args:
+                    if arg.startswith('seat'):
+                        return arg
+
+
+def rotate(list_to_rotate, amount):
+    return list_to_rotate[-amount:] + list_to_rotate[:-amount]
 
 
 def find_root_visual(screen):
@@ -149,8 +170,8 @@ class SeatNodelessDevice:
             # Sometimes the new udev rules are not automatically loaded
             # after calling systemd-logind's AttachDevice() method,
             # so we'll force it here.
-            run(['udevadm', 'control', '--reload-rules'])
-            run(['udevadm', 'trigger'])
+            subprocess.run(['udevadm', 'control', '--reload-rules'])
+            subprocess.run(['udevadm', 'trigger'])
 
             logger.info('Device %s successfully attached to seat %s',
                         self.sys_path, seat_name)
@@ -234,6 +255,8 @@ def main():
     context = pyudev.Context()
     all_keyboard_devices = scan_keyboard_devices(context)
     all_mouse_devices = scan_mouse_devices(context)
+    this_seat_name = get_seat_name()
+    logger.info('This seat name: %s', this_seat_name)
 
     # Here, configured_seats[seat_name] is
     # - True, if seat_name is seat0 or if there's at least one keyboard
@@ -244,12 +267,16 @@ def main():
                               for device in all_keyboard_devices
                               if device.seat_name == seat_name]))
          for (seat_name, _) in logind.ListSeats()}
-    configured_seats = OrderedDict(sorted(d.items(), key=lambda item: item[0]))
 
-    if configured_seats[THIS_SEAT_NAME]:
+    # We'll rotate the keys here to place seat0 in the first index
+    configured_seats = OrderedDict(
+        rotate(sorted(d.items(), key=lambda item: item[0]), 1))
+
+    if configured_seats[this_seat_name]:
         # There's already a keyboard attached to this seat. We can exit now.
         return
 
+    # Collect all input devices which are not yet attached to any seat
     available_keyboard_devices = [device
                                   for device in all_keyboard_devices
                                   if device.seat_name is None]
@@ -282,20 +309,25 @@ def main():
 
     # Initialize window
     window = Window()
-    window.set_wm_name(f'oi-lab-multi-seat-window-{THIS_SEAT_NAME}')
+    window.set_wm_name(f'oi-lab-multi-seat-window-{this_seat_name}')
     window.load_image(f'{SCREENS_DIR}/wait-loading.png')
-    sleep(2)
+    sleep(1)
 
     loop = asyncio.get_event_loop()
 
     async def read_all_keys(loop, keyboard):
         def refresh_screen(loop):
+            this_seat_name = get_seat_name()
             seat_names = [*configured_seats.keys()]
-            seat_states = [*configured_seats.values()]
+            seat_states = [*configured_seats.values()] + [None] * \
+                (MAX_SEAT_COUNT - len(seat_names))
 
-            index = seat_names.index(THIS_SEAT_NAME)
-            status = ''.join(f'{state:d}'
+            index = seat_names.index(this_seat_name)
+            status = ''.join(str(int(bool(state)))
                              for state in seat_states[1:])
+
+            logger.info('Loading image %s',
+                        f'{SCREENS_DIR}/seat{index}-{status}.png')
             window.load_image(
                 f'{SCREENS_DIR}/seat{index}-{status}.png')
 
@@ -303,7 +335,7 @@ def main():
             window.write_message(
                 f'Terminais restantes: {remaining_seats}        Teclados disponíveis: {num_available_keyboards[0]}')
 
-            if configured_seats[THIS_SEAT_NAME]:
+            if configured_seats[this_seat_name]:
                 loop.stop()
 
         refresh_screen(loop)
@@ -327,7 +359,7 @@ def main():
         logger.info(f'Key F{key} pressed on keyboard {keyboard.device_node}')
         key_seat_name = [*configured_seats.keys()][key]
 
-        if (key_seat_name == THIS_SEAT_NAME):
+        if (key_seat_name == get_seat_name()):
             # This is the key we expect! Attach the keyboard to this seat.
             keyboard.attach_to_seat(key_seat_name)
 
@@ -344,11 +376,11 @@ def main():
     except RuntimeError as error:
         # It's OK to stop the loop if there still are
         # unfinished coroutines and this seat was just configured.
-        if not configured_seats[THIS_SEAT_NAME]:
+        if not configured_seats[this_seat_name]:
             raise error
 
-    logger.info(f'Configuration finished for {THIS_SEAT_NAME}.')
-    sleep(2)
+    logger.info(f'Configuration finished for {this_seat_name}.')
+    sleep(1)
 
 
 if __name__ == '__main__':
