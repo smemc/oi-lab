@@ -364,6 +364,23 @@ def main():
             # This is the key we expect! Attach the keyboard to this seat.
             keyboard.attach_to_seat(key_seat_name)
 
+            # If the keyboard being attached to this seat is connected
+            # directly to a computer's USB or PS/2 port, find a mouse
+            # connected directly to another USB or PS/2 port
+            # and attach it together.
+            #
+            # Please note that, in this case,
+            # - if there's more than one mouse in this condition,
+            #   we can't ensure which one will be attached;
+            # - this seat will have no access to audio and removable media.
+            if keyboard.parent is None:
+                root_mouse_devices = [device
+                                      for device in all_mouse_devices
+                                      if device.parent is None]
+
+                if root_mouse_devices:
+                    root_mouse_devices[0].attach_to_seat(key_seat_name)
+
         configured_seats[key_seat_name] = True
         num_available_keyboards[0] -= 1
         refresh_screen(loop)
