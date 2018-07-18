@@ -44,20 +44,19 @@ logger.addHandler(JournalHandler())
 
 
 def get_seat_name():
-    seat_name = os.getenv('XDG_SEAT')
-
-    if seat_name is not None:
-        return seat_name
-    else:
+    try:
+        return os.environ['XDG_SEAT']
+    except KeyError:
+        # The environment variable XDG_SEAT is not set for us.
+        # Let's infer the seat name by filtering arguments "-seat seatFoo"
+        # from this display's Xorg full command line
         output = subprocess.check_output(
             ['ps', '--no-headers', '-o', 'cmd', '-C', 'Xorg']
         ).decode('utf-8').strip().split('\n')
 
         for line in output:
             if os.environ['DISPLAY'].split('.')[0] in line:
-                args = line.split(' ')
-
-                for arg in args:
+                for arg in line.split(' '):
                     if arg.startswith('seat'):
                         return arg
 
