@@ -234,20 +234,23 @@ def main():
 
     video_devices = kms_video_devices + sm501_video_devices
 
-    # The total number of configrable seats is limited by
-    # the availability of video devices, excluding /dev/fb0
-    # (we'll reserve it for seat0).
-    num_configurable_seats = min(MAX_SEAT_COUNT, len(video_devices)) - 1
+    # In some cases (e.g. a VirtualBox VM without guest additions installed),
+    # video_devices may be empty here.
+    if video_devices:
+        # The total number of configrable seats is limited by
+        # the availability of video devices, excluding /dev/fb0
+        # (we'll reserve it for seat0).
+        num_configurable_seats = min(MAX_SEAT_COUNT, len(video_devices)) - 1
 
-    # The first video device (normally /dev/fb0) will be reserved
-    # for seat0. There's no need to attach it explicitly,
-    # but it's convenient to write a sample lightdm.conf for it.
-    video_devices[0].seat_name = 'seat0'
-    video_devices[0].write_sample_lightdm_conf(0)
+        # The first video device (normally /dev/fb0) will be reserved
+        # for seat0. There's no need to attach it explicitly,
+        # but it's convenient to write a sample lightdm.conf for it.
+        video_devices[0].seat_name = 'seat0'
+        video_devices[0].write_sample_lightdm_conf(0)
 
-    if num_configurable_seats > 0:
-        for (index, video_device) in enumerate(video_devices[1:]):
-            video_device.attach_to_seat(index + 1)
+        if num_configurable_seats > 0:
+            for (index, video_device) in enumerate(video_devices[1:]):
+                video_device.attach_to_seat(index + 1)
 
 
 if __name__ == '__main__':
