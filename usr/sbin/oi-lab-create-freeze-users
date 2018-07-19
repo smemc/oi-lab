@@ -42,27 +42,3 @@ do
         echo "${username}:${username}" | chpasswd
     fi
 done
-
-if ! [ -f /etc/lightdm/lightdm.conf.d/10-oi-lab-autologin.conf ]
-then
-    [ -d /etc/lightdm/lightdm.conf.d ] || mkdir -p /etc/lightdm/lightdm.conf.d
-    cat >>/etc/lightdm/lightdm.conf.d/10-oi-lab-autologin.conf <<EOF
-#[Seat:*]
-#autologin-user-timeout=20
-
-#[Seat:seat0]
-#autologin-user=aluno1
-
-#[Seat:seat-1]
-#autologin-user=aluno2
-
-#[Seat:seat-2]
-#autologin-user=aluno3
-
-#[Seat:seat-3]
-#autologin-user=aluno4
-
-#[Seat:seat-4]
-#autologin-user=aluno5
-EOF
-fi
