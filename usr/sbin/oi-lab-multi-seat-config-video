@@ -219,34 +219,35 @@ def scan_sm501_video_devices(context):
 def main():
     context = pyudev.Context()
     kms_video_devices = scan_kms_video_devices(context)
-    sm501_video_devices = scan_sm501_video_devices(context)
-
-    for device in kms_video_devices:
-        logger.info('KMS video detected: %s -> %s',
-                    device.device_node, device.sys_path)
-
-        for drm in device.drm:
-            logger.info('>>> DRM node detected: %s -> %s',
-                        drm.device_node, drm.sys_path)
-
-    for device in sm501_video_devices:
-        logger.info('SM501 video detected: %s', device.sys_path)
-
-    video_devices = kms_video_devices + sm501_video_devices
 
     # In some cases (e.g. a VirtualBox VM without guest additions installed),
-    # video_devices may be empty here.
-    if video_devices:
+    # kms_video_devices may be empty here.
+    if kms_video_devices:
+        for device in kms_video_devices:
+            logger.info('KMS video detected: %s -> %s',
+                        device.device_node, device.sys_path)
+
+            for drm in device.drm:
+                logger.info('>>> DRM node detected: %s -> %s',
+                            drm.device_node, drm.sys_path)
+
+        # The first KMS/DRM video device (normally /dev/fb0) will be
+        # reserved for seat0. There's no need to attach it explicitly,
+        # but it's convenient to write a sample lightdm.conf for it.
+        kms_video_devices[0].seat_name = 'seat0'
+        kms_video_devices[0].write_sample_lightdm_conf(0)
+
+        sm501_video_devices = scan_sm501_video_devices(context)
+
+        for device in sm501_video_devices:
+            logger.info('SM501 video detected: %s', device.sys_path)
+
+        video_devices = kms_video_devices + sm501_video_devices
+
         # The total number of configrable seats is limited by
         # the availability of video devices, excluding /dev/fb0
         # (we'll reserve it for seat0).
         num_configurable_seats = min(MAX_SEAT_COUNT, len(video_devices)) - 1
-
-        # The first video device (normally /dev/fb0) will be reserved
-        # for seat0. There's no need to attach it explicitly,
-        # but it's convenient to write a sample lightdm.conf for it.
-        video_devices[0].seat_name = 'seat0'
-        video_devices[0].write_sample_lightdm_conf(0)
 
         if num_configurable_seats > 0:
             for (index, video_device) in enumerate(video_devices[1:]):
