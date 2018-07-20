@@ -113,7 +113,7 @@ class SeatMasterDevice(SeatDevice):
             sample_data = f"""\
 [Seat:{self.seat_name}]
 autologin-user-timeout=20
-#autologin-user=aluno{seat_index}
+#autologin-user=aluno{seat_index + 1}
 """
             create_file(file_path, sample_data)
 
