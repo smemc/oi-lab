@@ -4,14 +4,14 @@ Priority: optional
 Maintainer: Laércio de Sousa <laerciosousa@sme-mogidascruzes.sp.gov.br>
 Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.5
-Homepage: https://github.com/oiteam/oi-lab
-Vcs-Git: git://github.com/oiteam/oi-lab.git
-Vcs-Browser: https://github.com/oiteam/oi-lab
+Homepage: https://github.com/EducaMaisMogiTecnologia/oi-lab
+Vcs-Git: git://github.com/EducaMaisMogiTecnologia/oi-lab.git
+Vcs-Browser: https://github.com/EducaMaisMogiTecnologia/oi-lab
 
 Package: oi-lab-freeze-users
 Architecture: all
-Depends: ${misc:Depends}, bindfs, libpam-mount, hxtools, xdg-user-dirs-gtk
-Recommends: python-gnomekeyring
+Depends: ${misc:Depends}, bindfs, libpam-mount, xdg-user-dirs-gtk
+Recommends: hxtools, python-gnomekeyring
 Suggests: oi-lab-xubuntu-extra-settings | oi-lab-lubuntu-extra-settings
 Description: automatic user creation and freezing for school labs
  This package creates automatically some special users and
@@ -79,7 +79,7 @@ Description: additional configuration for Xubuntu and other Xfce-based systems
 Package: oi-lab-edu-meta
 Architecture: all
 Depends: ${misc:Depends},
-         gcompris-qt,
+         gcompris | gcompris-qt,
          tuxpaint, tuxpaint-config, tuxpaint-stamps-default,
          ktuberling, kde-l10n-ptbr,
          childsplay, childsplay-alphabet-sounds-pt,
