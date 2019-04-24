@@ -22,9 +22,12 @@ fi
 
 rm -rf /home/${freeze_template_user}
 
-if getent group freeze >/dev/null
-then
-    delgroup freeze
-fi
+for g in freeze alunos
+do
+    if getent group ${g} >/dev/null
+    then
+        delgroup ${g}
+    fi
+done
 
 rm -rf /var/freeze-data

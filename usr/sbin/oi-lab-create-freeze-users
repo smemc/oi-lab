@@ -9,10 +9,13 @@ do
     mkdir -p -m0777 /var/freeze-data/${dir}
 done
 
-if ! getent group freeze >/dev/null
-then
-    addgroup freeze
-fi
+for g in freeze alunos
+do
+    if ! getent group ${g} >/dev/null
+    then
+        addgroup ${g}
+    fi
+done
 
 if ! getent passwd ${freeze_template_user} >/dev/null
 then
@@ -37,8 +40,15 @@ do
     
     if ! getent passwd ${username} >/dev/null
     then
-        adduser --disabled-login --gecos "${fullname}" --shell /bin/bash ${username}
+        adduser --disabled-login --ingroup alunos --gecos "${fullname}" --shell /bin/bash ${username}
         adduser ${username} freeze
         echo "${username}:${username}" | chpasswd
     fi
 done
+
+apt update || true
+apt -y install libpam-umask || true
+
+echo "In order to finish users creation, run the following command:"
+echo
+echo "sudo sh -c \"echo 'session optional pam_umask.so umask=0002' >> /etc/default/login\""
