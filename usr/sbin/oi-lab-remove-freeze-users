@@ -31,3 +31,5 @@ do
 done
 
 rm -rf /var/freeze-data
+
+sed -i -e 's/UMASK=[0-9]+/UMASK=022/' /etc/login.defs

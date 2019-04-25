@@ -49,6 +49,4 @@ done
 apt update || true
 apt -y install libpam-umask || true
 
-echo "In order to finish users creation, run the following command:"
-echo
-echo "sudo sh -c \"echo 'session optional pam_umask.so umask=0002' >> /etc/default/login\""
+sed -i -e 's/UMASK=[0-9]+/UMASK=002/' /etc/login.defs
