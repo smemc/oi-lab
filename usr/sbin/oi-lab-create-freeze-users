@@ -49,4 +49,4 @@ done
 apt update || true
 apt -y install libpam-umask || true
 
-sed -i -e 's/UMASK=[0-9]+/UMASK=002/' /etc/login.defs
+sed -i -e 's/\(UMASK\t\+\)[0-9]\+/\1002/' /etc/login.defs
