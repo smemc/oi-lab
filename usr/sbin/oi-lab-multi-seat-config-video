@@ -172,6 +172,7 @@ EndSection
         # even after multi-seat is configured.
         socket_unit = f'oi-lab-xorg-daemon@{self.display_number}.socket'
         systemd.EnableUnitFiles([socket_unit], False, True)
+        systemd.StartUnit(socket_unit, 'replace')
 
     def write_nested_xorg_conf(self):
         if self.seat_name is not None:
