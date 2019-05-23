@@ -190,6 +190,7 @@ EndSection
         socket_unit = 'oi-lab-xorg-daemon@{}.socket'.format(
             self.display_number)
         systemd.EnableUnitFiles([socket_unit], False, True)
+        systemd.StartUnit(socket_unit, 'replace')
 
     def write_nested_xorg_conf(self):
         if self.seat_name is not None:

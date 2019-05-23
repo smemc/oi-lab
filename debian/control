@@ -31,7 +31,7 @@ Depends: ${misc:Depends},
          xserver-xorg-video-siliconmotion
 Recommends: xserver-xorg-video-nested, zram-config
 Suggests: oi-lab-freeze-users, oi-lab-userful-rescue
-Conflicts: oi-lab-proinfo-multi-seat-utils
+Conflicts: oi-lab-multi-seat-config-legacy, oi-lab-proinfo-multi-seat-utils
 Description: utilities for multi-seat support in some ProInfo computers
  This package includes some scripts and configuration files
  for multi-seat support in ProInfo-MEC computers with audio USB hubs from
@@ -40,6 +40,30 @@ Description: utilities for multi-seat support in some ProInfo computers
  - pregão FNDE 83/2008 (up to 3 seats)
  - pregão FNDE 68/2009 2º lote, with a pair of SM501 cards (up to 5 seats)
  - pregão FNDE 71/2010 (up to 3 seats)
+
+Package: oi-lab-multi-seat-config-legacy
+Architecture: all
+Depends: ${misc:Depends},
+         python3-cairocffi,
+         python3-dbus,
+         python3-evdev (>= 0.7.1),
+         python3-pyudev,
+         python3-systemd,
+         python3-xcffib,
+         xserver-xorg-video-siliconmotion
+Recommends: xserver-xorg-video-nested, zram-config
+Suggests: oi-lab-freeze-users, oi-lab-userful-rescue
+Conflicts: oi-lab-multi-seat-config, oi-lab-proinfo-multi-seat-utils
+Description: utilities for multi-seat support in some ProInfo computers (for Ubuntu 16.04.x)
+ This package includes some scripts and configuration files
+ for multi-seat support in ProInfo-MEC computers with audio USB hubs from
+ ThinNetworks and video cards based on Silicon Motion SM501 chip, namely:
+ .
+ - pregão FNDE 83/2008 (up to 3 seats)
+ - pregão FNDE 68/2009 2º lote, with a pair of SM501 cards (up to 5 seats)
+ - pregão FNDE 71/2010 (up to 3 seats)
+ .
+ This is a legacy implementation of oi-lab-multi-seat-config for Ubuntu 16.04.x
 
 Package: oi-lab-userful-rescue
 Architecture: all

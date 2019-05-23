@@ -4,8 +4,8 @@ lib/systemd/system/display-manager.service.d
 lib/systemd/system/oi-lab-multi-seat-config-video.service
 lib/systemd/system/oi-lab-xorg-daemon@.service
 lib/systemd/system/oi-lab-xorg-daemon@.socket
-usr/sbin/oi-lab-multi-seat-config-input
-usr/sbin/oi-lab-multi-seat-config-video
+usr/sbin/oi-lab-multi-seat-config-input-legacy usr/sbin/oi-lab-multi-seat-config-input
+usr/sbin/oi-lab-multi-seat-config-video-legacy usr/sbin/oi-lab-multi-seat-config-video
 usr/sbin/oi-lab-reset-seats
 usr/share/lightdm
 usr/share/oi-lab-multi-seat-config
