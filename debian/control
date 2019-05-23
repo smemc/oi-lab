@@ -46,7 +46,7 @@ Architecture: all
 Depends: ${misc:Depends},
          python3-cairocffi,
          python3-dbus,
-         python3-evdev (>= 0.7.1),
+         python3-evdev (>= 0.7.0),
          python3-pyudev,
          python3-systemd,
          python3-xcffib,

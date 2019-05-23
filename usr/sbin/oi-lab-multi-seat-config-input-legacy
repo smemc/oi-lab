@@ -4,7 +4,7 @@
 # Dependencies for Ubuntu 16.04
 # - python3-cairocffi
 # - python3-dbus
-# - python3-evdev >= 0.7.1 (needs backporting)
+# - python3-evdev >= 0.7.0 (needs backporting)
 # - python3-pyudev
 # - python3-systemd
 # - python3-xcffib
