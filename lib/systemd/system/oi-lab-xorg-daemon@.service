@@ -3,5 +3,5 @@ Description=Service for Xorg server :%i
 
 [Service]
 ExecStart=/usr/bin/Xorg :%i -seat __fake-seat-%i__ -dpms -s 0 -nocursor -noreset -terminate
-StopWhenUneeded=yes
+StopWhenUnneeded=yes
 SuccessExitStatus=0 1
