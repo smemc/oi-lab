@@ -1,4 +1,4 @@
-# About oi-lab
+# oi-lab
 
 Ubuntu extra configuration files and scripts for school labs in Mogi das Cruzes, SP, Brazil (including ProInfo multi-seat workstations)
 
