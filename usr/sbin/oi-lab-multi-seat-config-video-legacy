@@ -147,7 +147,7 @@ class SeatKMSVideoDevice(SeatMasterDevice):
 
         for node in self.drm:
             # Attach all other DRM device nodes as well
-            node.attach_to_seat(self.seat_name)
+            node.attach_to_seat(seat_index)
 
 
 class SeatSM501VideoDevice(SeatMasterDevice):
@@ -241,7 +241,8 @@ def scan_sm501_video_devices(context):
 
 def main():
     context = pyudev.Context()
-    kms_video_devices = scan_kms_video_devices(context)
+    kms_video_devices = sorted(scan_kms_video_devices(context),
+                               key=lambda device: device.device_node)
 
     # In some cases (e.g. a VirtualBox VM without guest additions installed),
     # kms_video_devices may be empty here.
